@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <stdint.h>
 #include <string.h>
