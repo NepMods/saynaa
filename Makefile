@@ -1,7 +1,7 @@
 MODE := debug
 NAME := lang
 SOURCE_DIR := src
-CFLAGS := -std=c++11
+CFLAGS := -std=c++20
 CC := g++
 
 # Mode configuration.

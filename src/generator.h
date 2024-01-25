@@ -32,7 +32,9 @@ private:
     Chunk* chunk;
     Value* stackSize;
 
-    std::stringstream assembly;
+    std::stringstream assembly_main;
+    std::stringstream assembly_text;
+    std::stringstream assembly_data;
     uint8_t* ip;
 public:
     Generator();

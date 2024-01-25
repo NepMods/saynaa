@@ -11,8 +11,7 @@ void ValueArray::write(Value value) {
   if (capacity < count + 1) {
     int oldCapacity = capacity;
     capacity = GROW_CAPACITY(oldCapacity);
-    values = GROW_ARRAY(Value, values,
-                               oldCapacity, capacity);
+    values = GROW_ARRAY(Value, values, capacity);
   }
 
   values[count] = value;
@@ -40,7 +39,7 @@ void ValueArray::printValue(Value value) {
 }
 
 void ValueArray::free() {
-  FREE_ARRAY(Value, values, capacity);
+  FREE_ARRAY(Value, values);
   
   values = NULL;
   capacity = 0;

@@ -63,3 +63,5 @@ Sessionx.vim
 
 # assembly
 *.asm
+lang
+app

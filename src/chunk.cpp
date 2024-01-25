@@ -9,8 +9,8 @@ void Chunk::write(uint8_t byte, int line) {
     if (capacity < count + 1) {
         int oldCapacity = capacity;
         capacity = GROW_CAPACITY(oldCapacity);
-        code = GROW_ARRAY(uint8_t, code, oldCapacity, capacity);
-        lines = GROW_ARRAY(int, lines, oldCapacity, capacity);
+        code = GROW_ARRAY(uint8_t, code, capacity);
+        lines = GROW_ARRAY(int, lines, capacity);
     }
 
     code[count] = byte;
@@ -24,8 +24,8 @@ void Chunk::write(uint8_t byte, int line) {
  }
 
 void Chunk::free(){
-    FREE_ARRAY(uint8_t, code, capacity);
-    FREE_ARRAY(int, lines, capacity);
+    FREE_ARRAY(uint8_t, code);
+    FREE_ARRAY(int, lines);
     constants.free();
 
     code = NULL;
@@ -50,7 +50,7 @@ int Chunk::disassembleInstruction(int offset) {
       lines[offset] == lines[offset - 1]) {
     cout << "   | ";
   } else {
-    cout << setw(4) << lines[offset] << " ";
+    cout << "   " << lines[offset] << " ";
   }
 
   uint8_t instruction = code[offset];

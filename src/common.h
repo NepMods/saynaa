@@ -2,6 +2,7 @@
 #define lang_common_h
 
 #include <iostream>
+#include <vector>
 #include <fstream>
 #include <stdio.h>
 #include <stdbool.h>

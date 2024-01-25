@@ -1,2 +1,2 @@
-print(20);
+print(20-5*3);
 print(30);

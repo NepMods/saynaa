@@ -6,33 +6,33 @@
 Generator generator; 
 
 Generator::Generator() {
-    assembly << "section .data\n";
-    assembly << "section .text\n";
-    assembly << "global _start\n";
+    assembly_data << "section .data\n";
+    assembly_text << "section .text\n";
+    assembly_text << "global _start\n";
     
-    assembly << "print_int:\n";
-    assembly << "    mov    eax, edi\n";
-    assembly << "    mov    ecx, 0xa\n";
-    assembly << "    push   rcx\n";
-    assembly << "    mov    rsi, rsp\n";
-    assembly << "    sub    rsp, 16\n";
-    assembly << "    .toascii_digit:\n";
-    assembly << "        xor    edx, edx\n";
-    assembly << "        div    ecx\n";
-    assembly << "        add    edx, '0'\n";
-    assembly << "        dec    rsi\n";
-    assembly << "        mov    [rsi], dl\n";
-    assembly << "        test   eax, eax\n";
-    assembly << "        jnz    .toascii_digit\n";
-    assembly << "    mov    eax, 1\n";
-    assembly << "    mov    edi, 1\n";
-    assembly << "    lea    edx, [rsp+16 + 1]\n";
-    assembly << "    sub    edx, esi\n";
-    assembly << "    syscall\n";
-    assembly << "    add    rsp, 24\n";
-    assembly << "    ret\n";
+    assembly_text << "print_int:\n";
+    assembly_text << "    mov    eax, edi\n";
+    assembly_text << "    mov    ecx, 0xa\n";
+    assembly_text << "    push   rcx\n";
+    assembly_text << "    mov    rsi, rsp\n";
+    assembly_text << "    sub    rsp, 16\n";
+    assembly_text << "    .toascii_digit:\n";
+    assembly_text << "        xor    edx, edx\n";
+    assembly_text << "        div    ecx\n";
+    assembly_text << "        add    edx, '0'\n";
+    assembly_text << "        dec    rsi\n";
+    assembly_text << "        mov    [rsi], dl\n";
+    assembly_text << "        test   eax, eax\n";
+    assembly_text << "        jnz    .toascii_digit\n";
+    assembly_text << "    mov    eax, 1\n";
+    assembly_text << "    mov    edi, 1\n";
+    assembly_text << "    lea    edx, [rsp+16 + 1]\n";
+    assembly_text << "    sub    edx, esi\n";
+    assembly_text << "    syscall\n";
+    assembly_text << "    add    rsp, 24\n";
+    assembly_text << "    ret\n";
 
-    assembly << "_start:\n";
+    assembly_main << "_start:\n";
 
 }
 
@@ -44,12 +44,12 @@ void Generator::runtimeError(const std::string error) {
 }
 
 void Generator::push(const std::string& reg) {
-  assembly << "    push " << reg << "\n";
+  assembly_main << "    push " << reg << "\n";
   stackSize++;
 }
 
 void Generator::pop(const std::string& reg) {
-  assembly << "    pop " << reg << "\n";
+  assembly_main << "    pop " << reg << "\n";
   stackSize--;
 }
 
@@ -67,19 +67,19 @@ InterpretResult Generator::bytecode() {
         if(type == V_ADD){                                  \
             pop("rax");                                     \
             pop("rbx");                                     \
-            assembly << "    add rax, rbx\n";               \
+            assembly_main << "    add rax, rbx\n";          \
         } else if(type == V_SUB) {                          \
             pop("rbx");                                     \
             pop("rax");                                     \
-            assembly << "    sub rax, rbx\n";               \
+            assembly_main << "    sub rax, rbx\n";          \
         } else if(type == V_MUL) {                          \
             pop("rax");                                     \
             pop("rbx");                                     \
-            assembly << "    mul rbx\n";                    \
+            assembly_main << "    mul rbx\n";               \
         } else if(type == V_DIV) {                          \
             pop("rbx");                                     \
             pop("rax");                                     \
-            assembly << "    div rbx\n";                    \
+            assembly_main << "    div rbx\n";               \
         }                                                   \
         push("rax");                                        \
     } while (false)
@@ -88,7 +88,7 @@ InterpretResult Generator::bytecode() {
       uint8_t instruction;
       switch (instruction = READ_BYTE()) {
         case OP_CONSTANT: {
-          assembly << "    mov rax, " << std::to_string(checkAndReturnValue(READ_CONSTANT())) << "\n";
+          assembly_main << "    mov rax, " << std::to_string(checkAndReturnValue(READ_CONSTANT())) << "\n";
           push("rax");
           
           break;
@@ -111,18 +111,20 @@ InterpretResult Generator::bytecode() {
           break;
         case OP_PRINT: {
           pop("rdi");
-          assembly << "    call print_int\n";
+          assembly_main << "    call print_int\n";
           break;
         }
         case OP_RETURN: {
           push("rax");
-          
-          assembly << "    mov rax, 60\n";
-          assembly << "    xor rdi, rdi\n";
-          assembly << "    syscall\n";
-          
+
+          assembly_main << "    mov rax, 60\n";
+          assembly_main << "    xor rdi, rdi\n";
+          assembly_main << "    syscall\n";
+
           std::ofstream outputFile("nasm.asm");
-          outputFile << assembly.str();
+          outputFile << assembly_data.str();
+          outputFile << assembly_text.str();
+          outputFile << assembly_main.str();
           outputFile.close();
 
           return INTERPRET_OK;

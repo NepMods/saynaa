@@ -126,10 +126,10 @@ static void emitConstant(Value value) {
 static void endCompiler() {
   emitReturn();
   #ifdef DEBUG_PRINT_CODE
-  if (!parser.hadError) {
-    currentChunk()->disassemble("code");
-  }
-#endif
+    if (!parser.hadError) {
+      currentChunk()->disassemble("code");
+    }
+  #endif
 }
 
 static void expression();
