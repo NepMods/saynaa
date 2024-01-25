@@ -1,5 +1,5 @@
-#ifndef lang_memory_h
-#define lang_memory_h
+#ifndef lang_utils_h
+#define lang_utils_h
 
 #include "common.h"
 
@@ -15,5 +15,4 @@
 
 
 void* reallocate(void* pointer, size_t oldSize, size_t newSize);
-
 #endif

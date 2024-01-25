@@ -1,5 +1,5 @@
-#ifndef lang_vm_h
-#define lang_vm_h
+#ifndef lang_generator_h
+#define lang_generator_h
 
 #include "chunk.h"
 #include "value.h"
@@ -13,7 +13,7 @@ typedef enum {
   INTERPRET_RUNTIME_ERROR
 } InterpretResult;
 
-class VM {
+class Generator {
 private:
     enum {
       V_ADD,
@@ -35,11 +35,11 @@ private:
     std::stringstream assembly;
     uint8_t* ip;
 public:
-    VM();
+    Generator();
     void free();
     InterpretResult run(const std::string source);
 
 };
 
-extern VM vm;
+extern Generator generator;
 #endif

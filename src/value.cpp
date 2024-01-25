@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "memory.h"
+#include "utils.h"
 #include "value.h"
 
 ValueArray::ValueArray() : values(NULL), capacity(0), count(0) {

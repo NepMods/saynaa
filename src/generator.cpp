@@ -1,41 +1,65 @@
 #include "common.h"
 #include "compiler.h"
-#include "vm.h"
+#include "generator.h"
 #include <cstdarg>
 
-VM vm; 
+Generator generator; 
 
-VM::VM() {
+Generator::Generator() {
     assembly << "section .data\n";
     assembly << "section .text\n";
     assembly << "global _start\n";
+    
+    assembly << "print_int:\n";
+    assembly << "    mov    eax, edi\n";
+    assembly << "    mov    ecx, 0xa\n";
+    assembly << "    push   rcx\n";
+    assembly << "    mov    rsi, rsp\n";
+    assembly << "    sub    rsp, 16\n";
+    assembly << "    .toascii_digit:\n";
+    assembly << "        xor    edx, edx\n";
+    assembly << "        div    ecx\n";
+    assembly << "        add    edx, '0'\n";
+    assembly << "        dec    rsi\n";
+    assembly << "        mov    [rsi], dl\n";
+    assembly << "        test   eax, eax\n";
+    assembly << "        jnz    .toascii_digit\n";
+    assembly << "    mov    eax, 1\n";
+    assembly << "    mov    edi, 1\n";
+    assembly << "    lea    edx, [rsp+16 + 1]\n";
+    assembly << "    sub    edx, esi\n";
+    assembly << "    syscall\n";
+    assembly << "    add    rsp, 24\n";
+    assembly << "    ret\n";
+
     assembly << "_start:\n";
+
 }
 
-void VM::free() {
+void Generator::free() {
 }
 
-void VM::runtimeError(const std::string error) {
+void Generator::runtimeError(const std::string error) {
   cout << error << endl;
 }
 
-void VM::push(const std::string& reg) {
+void Generator::push(const std::string& reg) {
   assembly << "    push " << reg << "\n";
   stackSize++;
 }
 
-void VM::pop(const std::string& reg) {
+void Generator::pop(const std::string& reg) {
   assembly << "    pop " << reg << "\n";
   stackSize--;
 }
 
-int VM::checkAndReturnValue(Value val) {
+int Generator::checkAndReturnValue(Value val) {
   if (!IS_NUMBER(val))
     runtimeError("Sorry must be numbers.");
   return AS_NUMBER(val);
 }
 
-InterpretResult VM::bytecode() {
+InterpretResult Generator::bytecode() {
   #define READ_BYTE() (*ip++)
   #define READ_CONSTANT() (chunk->constants.values[READ_BYTE()])
   #define BINARY_OP(valueType, op, type)                    \
@@ -85,11 +109,16 @@ InterpretResult VM::bytecode() {
           break;
         case OP_NEGATE:
           break;
+        case OP_PRINT: {
+          pop("rdi");
+          assembly << "    call print_int\n";
+          break;
+        }
         case OP_RETURN: {
           push("rax");
           
           assembly << "    mov rax, 60\n";
-          assembly << "    pop rdi\n";
+          assembly << "    xor rdi, rdi\n";
           assembly << "    syscall\n";
           
           std::ofstream outputFile("nasm.asm");
@@ -106,7 +135,7 @@ InterpretResult VM::bytecode() {
   #undef READ_BYTE
 }
 
-InterpretResult VM::run(const std::string source) {
+InterpretResult Generator::run(const std::string source) {
   Chunk ch;
 
   if (!compile(source, &ch)) {
@@ -114,8 +143,8 @@ InterpretResult VM::run(const std::string source) {
     return INTERPRET_COMPILE_ERROR;
   }
 
-  vm.chunk = &ch;
-  vm.ip = vm.chunk->code;
+  generator.chunk = &ch;
+  generator.ip = generator.chunk->code;
 
   InterpretResult result = bytecode();
 
