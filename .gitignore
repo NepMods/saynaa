@@ -3,6 +3,7 @@
 .vscode/
 obj/
 build/
+test/
 
 ### C/Cpp ###
 # Prerequisites

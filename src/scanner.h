@@ -5,24 +5,50 @@
 
 typedef enum {
   // Single-character tokens.
-  TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
-  TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
-  TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
-  TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR,
-  // One or two character tokens.
-  TOKEN_BANG, TOKEN_BANG_EQUAL,
-  TOKEN_EQUAL, TOKEN_EQUAL_EQUAL,
-  TOKEN_GREATER, TOKEN_GREATER_EQUAL,
-  TOKEN_LESS, TOKEN_LESS_EQUAL,
-  // Literals.
-  TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER,
-  // Keywords.
-  TOKEN_AND, TOKEN_CLASS, TOKEN_ELSE, TOKEN_FALSE,
-  TOKEN_FOR, TOKEN_FUN, TOKEN_IF, TOKEN_NIL, TOKEN_OR,
-  TOKEN_PRINT, TOKEN_RETURN, TOKEN_SUPER, TOKEN_THIS,
-  TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE,
+  TK_LEFT_PAREN,
+  TK_RIGHT_PAREN,
+  TK_LEFT_BRACE,
+  TK_RIGHT_BRACE,
+  TK_COMMA,
+  TK_DOT,
+  TK_MINUS,
+  TK_PLUS,
+  TK_SEMICOLON,
+  TK_SLASH,
+  TK_STAR,
 
-  TOKEN_ERROR, TOKEN_EOF
+  // One or two character tokens.
+  TK_BANG,
+  TK_BANG_EQUAL,
+  TK_EQUAL,
+  TK_EQUAL_EQUAL,
+  TK_GREATER,
+  TK_GREATER_EQUAL,
+  TK_LESS,
+  TK_LESS_EQUAL,
+
+  // Literals.
+  TK_IDENTIFIER,
+  TK_STRING,
+  TK_NUMBER,
+
+  // Keywords.
+  TK_AND,
+  TK_ELSE,
+  TK_FALSE,
+  TK_FOR,
+  TK_FUNCTION,
+  TK_IF,
+  TK_NULL,
+  TK_OR,
+  TK_PRINT,
+  TK_RETURN,
+  TK_TRUE,
+  TK_VAR,
+  TK_WHILE,
+
+  TK_ERROR,
+  TK_EOF
 } TokenType;
 
 typedef struct {
@@ -32,6 +58,30 @@ typedef struct {
     int line;
 } Token;
 
+typedef struct {
+  const char* identifier;
+  int length;
+  TokenType tk_type;
+} _Keyword;
+
+// List of keywords mapped into their identifiers.
+static _Keyword _keywords[] =  {
+  { "print",    5, TK_PRINT    },
+  { "and",      3, TK_AND      },
+  { "else",     4, TK_ELSE     },
+  { "false",    5, TK_FALSE    },
+  { "for",      3, TK_FOR      },
+  { "function", 8, TK_FUNCTION },
+  { "if",       2, TK_IF       },
+  { "null",     4, TK_NULL     },
+  { "or",       2, TK_OR       },
+  { "return",   6, TK_RETURN   },
+  { "true",     4, TK_TRUE     },
+  { "var",      3, TK_VAR      },
+  { "while",    5, TK_WHILE    },
+
+  { NULL,   0, (TokenType)(0) }, // Sentinel to mark the end of the array.
+};
 
 class Scanner {
 private:

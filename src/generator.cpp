@@ -37,6 +37,7 @@ Generator::Generator() {
 }
 
 void Generator::free() {
+
 }
 
 void Generator::runtimeError(const std::string error) {
@@ -53,15 +54,7 @@ void Generator::pop(const std::string& reg) {
   stackSize--;
 }
 
-int Generator::checkAndReturnValue(Value val) {
-  if (!IS_NUMBER(val))
-    runtimeError("Sorry must be numbers.");
-  return AS_NUMBER(val);
-}
-
-InterpretResult Generator::bytecode() {
-  #define READ_BYTE() (*ip++)
-  #define READ_CONSTANT() (chunk->constants.values[READ_BYTE()])
+InterpretResult Generator::run() {
   #define BINARY_OP(valueType, op, type)                    \
     do {                                                    \
         if(type == V_ADD){                                  \
@@ -83,14 +76,12 @@ InterpretResult Generator::bytecode() {
         }                                                   \
         push("rax");                                        \
     } while (false)
-  
-    for (;;) {
-      uint8_t instruction;
-      switch (instruction = READ_BYTE()) {
+
+    for(int i = 0; i != opcode.size(); i++) {
+      switch (opcode[i]) {
         case OP_CONSTANT: {
-          assembly_main << "    mov rax, " << std::to_string(checkAndReturnValue(READ_CONSTANT())) << "\n";
+          assembly_main << "    mov rax, " << std::to_string(value->value[opcode[++i]]) << "\n";
           push("rax");
-          
           break;
         }
         case OP_NIL:  break;
@@ -131,25 +122,24 @@ InterpretResult Generator::bytecode() {
         }
       }
     }
-  
-  #undef READ_CONSTANT
+
   #undef BINARY_OP
-  #undef READ_BYTE
+  return INTERPRET_RUNTIME_ERROR;
 }
 
-InterpretResult Generator::run(const std::string source) {
-  Chunk ch;
+InterpretResult Generator::main(const std::string source) {
+  Value val;
 
-  if (!compile(source, &ch)) {
-    ch.free();
+  if (!compile(source, &val)) {
+    val.free();
     return INTERPRET_COMPILE_ERROR;
   }
 
-  generator.chunk = &ch;
-  generator.ip = generator.chunk->code;
+  generator.value = &val;
+  generator.opcode = generator.value->opcode;
 
-  InterpretResult result = bytecode();
+  InterpretResult result = run();
 
-  ch.free();
+  val.free();
   return result;
 }

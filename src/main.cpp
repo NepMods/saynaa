@@ -1,5 +1,4 @@
 #include "common.h"
-#include "chunk.h"
 #include "generator.h"
 
 int main(int argc, const char* argv[]){
@@ -16,7 +15,7 @@ int main(int argc, const char* argv[]){
     string source((istreambuf_iterator<char>(inputFile)),
                        istreambuf_iterator<char>());
 
-    generator.run(source);
+    generator.main(source);
     generator.free();
     return 0;
 }

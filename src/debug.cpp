@@ -1,48 +1,16 @@
-#include "chunk.h"
-#include "utils.h"
+#include "debug.h"
 
-Chunk::Chunk() : count(0), lines(NULL), capacity(0), code(NULL) {
-
+Debug::Debug(Value value) : value(value.value), opcode(value.opcode), lines(value.lines) {
 }
-
-void Chunk::write(uint8_t byte, int line) {
-    if (capacity < count + 1) {
-        int oldCapacity = capacity;
-        capacity = GROW_CAPACITY(oldCapacity);
-        code = GROW_ARRAY(uint8_t, code, capacity);
-        lines = GROW_ARRAY(int, lines, capacity);
-    }
-
-    code[count] = byte;
-    lines[count] = line;
-    count++;
-}
-
- int Chunk::addConstant(Value value){
-    constants.write(value);
-    return constants.count - 1;
- }
-
-void Chunk::free(){
-    FREE_ARRAY(uint8_t, code);
-    FREE_ARRAY(int, lines);
-    constants.free();
-
-    code = NULL;
-    capacity = 0;
-    lines = NULL;
-    count = 0;
-}
-
-void Chunk::disassemble(const std::string name) {
+void Debug::disassemble(const std::string name) {
   cout << "== " << name << " ==" << endl;
 
-  for (int offset = 0; offset < count;) {
+  for (int offset = 0; offset < opcode.size();) {
     offset = disassembleInstruction(offset);
   }
 }
 
-int Chunk::disassembleInstruction(int offset) {
+int Debug::disassembleInstruction(int offset) {
   printf("%04d ", offset);
   //cout << setw(4) << setfill('0') << offset << " ";
 
@@ -53,7 +21,7 @@ int Chunk::disassembleInstruction(int offset) {
     cout << "   " << lines[offset] << " ";
   }
 
-  uint8_t instruction = code[offset];
+  uint8_t instruction = opcode[offset];
   switch (instruction) {
     case OP_CONSTANT:
       return constantInstruction("OP_CONSTANT", offset);
@@ -91,15 +59,16 @@ int Chunk::disassembleInstruction(int offset) {
   }
 }
 
-int Chunk::simpleInstruction(const std::string name, int offset) {
+int Debug::simpleInstruction(const std::string name, int offset) {
   cout << name << endl;
   return offset + 1;
 }
 
-int Chunk::constantInstruction(const std::string name, int offset) {
-  uint8_t constant = code[offset + 1];
-  cout << left << setw(16) << name << setw(4) << constant << "'";
-  constants.printValue(constants.values[constant]);
+int Debug::constantInstruction(const std::string name, int offset) {
+  uint8_t val = opcode[offset +1];
+  cout << left << setw(16) << name << setw(4) << val << "'";
+  //constants.printValue(constants.values[constant]);
+  cout << value[val];
   cout << "'" << endl;
   return offset + 2;
 }

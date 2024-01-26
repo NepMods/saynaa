@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <variant>
 #include <fstream>
 #include <stdio.h>
 #include <stdbool.h>

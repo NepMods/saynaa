@@ -1,8 +1,9 @@
 #ifndef lang_compiler_h
 #define lang_compiler_h
 
-#include "chunk.h"
+#include "public.h"
+#include "debug.h"
 
-bool compile(const std::string source, Chunk* chunk);
+bool compile(const std::string source, Value* value);
 
 #endif

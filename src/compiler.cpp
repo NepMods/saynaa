@@ -35,10 +35,10 @@ typedef struct {
 
 Parser parser;
 Scanner scanner;
-Chunk* compilingChunk;
+Value* compilingValue;
 
-static Chunk* currentChunk() {
-  return compilingChunk;
+static Value* currentValue() {
+  return compilingValue;
 }
 
 static void errorAt(Token* token, const std::string message) {
@@ -46,9 +46,9 @@ static void errorAt(Token* token, const std::string message) {
   parser.panicMode = true;
   cerr << "[line " << token->line << "] Error";
 
-  if (token->type == TOKEN_EOF) {
+  if (token->type == TK_EOF) {
     cerr << " at end";
-  } else if (token->type == TOKEN_ERROR) {
+  } else if (token->type == TK_ERROR) {
     // Nothing.
   } else {
     fprintf(stderr, " at '%.*s'", token->length, token->start);
@@ -71,7 +71,7 @@ static void advance() {
 
   for (;;) {
     parser.current = scanner.scanToken();
-    if (parser.current.type != TOKEN_ERROR) break;
+    if (parser.current.type != TK_ERROR) break;
 
     errorAtCurrent(parser.current.start);
   }
@@ -97,7 +97,7 @@ static bool match(TokenType type) {
 }
 
 static void emitByte(uint8_t byte) {
-  currentChunk()->write(byte, parser.previous.line);
+  currentValue()->write(byte, parser.previous.line);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -109,8 +109,8 @@ static void emitReturn() {
   emitByte(OP_RETURN);
 }
 
-static uint8_t makeConstant(Value value) {
-  int constant = currentChunk()->addConstant(value);
+static uint8_t makeConstant(int value) {
+  int constant = currentValue()->addValue(value);
   if (constant > UINT8_MAX) {
     error("Too many constants in one chunk.");
     return 0;
@@ -119,7 +119,7 @@ static uint8_t makeConstant(Value value) {
   return (uint8_t)constant;
 }
 
-static void emitConstant(Value value) {
+static void emitConstant(int value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
@@ -127,7 +127,8 @@ static void endCompiler() {
   emitReturn();
   #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
-      currentChunk()->disassemble("code");
+      Debug debug(*currentValue());
+      debug.disassemble("code");
     }
   #endif
 }
@@ -144,37 +145,37 @@ static void binary() {
   parsePrecedence((Precedence)(rule->precedence + 1));
 
   switch (operatorType) {
-    case TOKEN_BANG_EQUAL:    emitBytes(OP_EQUAL, OP_NOT); break;
-    case TOKEN_EQUAL_EQUAL:   emitByte(OP_EQUAL); break;
-    case TOKEN_GREATER:       emitByte(OP_GREATER); break;
-    case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
-    case TOKEN_LESS:          emitByte(OP_LESS); break;
-    case TOKEN_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT); break;
-    case TOKEN_PLUS:          emitByte(OP_ADD); break;
-    case TOKEN_MINUS:         emitByte(OP_SUBTRACT); break;
-    case TOKEN_STAR:          emitByte(OP_MULTIPLY); break;
-    case TOKEN_SLASH:         emitByte(OP_DIVIDE); break;
+    case TK_BANG_EQUAL:    emitBytes(OP_EQUAL, OP_NOT); break;
+    case TK_EQUAL_EQUAL:   emitByte(OP_EQUAL); break;
+    case TK_GREATER:       emitByte(OP_GREATER); break;
+    case TK_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
+    case TK_LESS:          emitByte(OP_LESS); break;
+    case TK_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT); break;
+    case TK_PLUS:          emitByte(OP_ADD); break;
+    case TK_MINUS:         emitByte(OP_SUBTRACT); break;
+    case TK_STAR:          emitByte(OP_MULTIPLY); break;
+    case TK_SLASH:         emitByte(OP_DIVIDE); break;
     default: return; // Unreachable.
   }
 }
 
 static void literal() {
   switch (parser.previous.type) {
-    case TOKEN_FALSE: emitByte(OP_FALSE); break;
-    case TOKEN_NIL: emitByte(OP_NIL); break;
-    case TOKEN_TRUE: emitByte(OP_TRUE); break;
+    case TK_FALSE: emitByte(OP_FALSE); break;
+    case TK_NULL: emitByte(OP_NIL); break;
+    case TK_TRUE: emitByte(OP_TRUE); break;
     default: return; // Unreachable.
   }
 }
 
 static void grouping() {
   expression();
-  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+  consume(TK_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
 static void number() {
   double value = strtod(parser.previous.start, NULL);
-  emitConstant(NUMBER_VAL(value));
+  emitConstant((value));
 }
 
 static void unary() {
@@ -185,53 +186,50 @@ static void unary() {
 
   // Emit the operator instruction.
   switch (operatorType) {
-    case TOKEN_BANG: emitByte(OP_NOT); break;
-    case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+    case TK_BANG: emitByte(OP_NOT); break;
+    case TK_MINUS: emitByte(OP_NEGATE); break;
     default: return; // Unreachable.
   }
 }
 
 ParseRule rules[] = {
-  [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
-  [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE}, 
-  [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
-  [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
-  [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
-  [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
-  [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
-  [TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
-  [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
-  [TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
-  [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
-  [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
-  [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
-  [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
-  [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
-  [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
+  [TK_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
+  [TK_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
+  [TK_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
+  [TK_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+  [TK_COMMA]         = {NULL,     NULL,   PREC_NONE},
+  [TK_DOT]           = {NULL,     NULL,   PREC_NONE},
+  [TK_MINUS]         = {unary,    binary, PREC_TERM},
+  [TK_PLUS]          = {NULL,     binary, PREC_TERM},
+  [TK_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
+  [TK_SLASH]         = {NULL,     binary, PREC_FACTOR},
+  [TK_STAR]          = {NULL,     binary, PREC_FACTOR},
+  [TK_BANG]          = {unary,    NULL,   PREC_NONE},
+  [TK_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
+  [TK_EQUAL]         = {NULL,     NULL,   PREC_NONE},
+  [TK_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
+  [TK_GREATER]       = {NULL,     binary, PREC_COMPARISON},
+  [TK_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
+  [TK_LESS]          = {NULL,     binary, PREC_COMPARISON},
+  [TK_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
+  [TK_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
+  [TK_STRING]        = {NULL,     NULL,   PREC_NONE},
+  [TK_NUMBER]        = {number,   NULL,   PREC_NONE},
+  [TK_AND]           = {NULL,     NULL,   PREC_NONE},
+  [TK_ELSE]          = {NULL,     NULL,   PREC_NONE},
+  [TK_FALSE]         = {literal,  NULL,   PREC_NONE},
+  [TK_FOR]           = {NULL,     NULL,   PREC_NONE},
+  [TK_FUNCTION]      = {NULL,     NULL,   PREC_NONE},
+  [TK_IF]            = {NULL,     NULL,   PREC_NONE},
+  [TK_NULL]          = {literal,  NULL,   PREC_NONE},
+  [TK_OR]            = {NULL,     NULL,   PREC_NONE},
+  [TK_PRINT]         = {NULL,     NULL,   PREC_NONE},
+  [TK_RETURN]        = {NULL,     NULL,   PREC_NONE},
+  [TK_TRUE]          = {literal,  NULL,   PREC_NONE},
+  [TK_VAR]           = {NULL,     NULL,   PREC_NONE},
+  [TK_WHILE]         = {NULL,     NULL,   PREC_NONE},
+  [TK_ERROR]         = {NULL,     NULL,   PREC_NONE},
+  [TK_EOF]           = {NULL,     NULL,   PREC_NONE},
 };
 
 static void parsePrecedence(Precedence precedence) {
@@ -261,7 +259,7 @@ static void expression() {
 
 static void printStatement() {
   expression();
-  consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+  consume(TK_SEMICOLON, "Expect ';' after value.");
   emitByte(OP_PRINT);
 }
 
@@ -270,20 +268,20 @@ static void declaration() {
 }
 
 static void statement() {
-  if (match(TOKEN_PRINT)) {
+  if (match(TK_PRINT)) {
     printStatement();
   }
 }
 
-bool compile(const std::string source, Chunk* chunk) {
+bool compile(const std::string source, Value* value) {
   scanner.put(source.c_str());
-  compilingChunk = chunk;
+  compilingValue = value;
 
   parser.hadError = false;
   parser.panicMode = false;
 
   advance();
-  while (!match(TOKEN_EOF)) {
+  while (!match(TK_EOF)) {
     declaration();
   }
   endCompiler();

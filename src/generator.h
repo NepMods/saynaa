@@ -1,8 +1,7 @@
 #ifndef lang_generator_h
 #define lang_generator_h
 
-#include "chunk.h"
-#include "value.h"
+#include "public.h"
 #include "common.h"
 
 #define STACK_MAX 256
@@ -23,23 +22,22 @@ private:
       V_NOTHING,
     };
 
-    InterpretResult bytecode();
+    InterpretResult run();
     void runtimeError(const std::string error);
     void push(const std::string &reg);
     void pop(const std::string &reg);
-    int checkAndReturnValue(Value val);
 
-    Chunk* chunk;
-    Value* stackSize;
+    Value* value;
+    int stackSize;
 
     std::stringstream assembly_main;
     std::stringstream assembly_text;
     std::stringstream assembly_data;
-    uint8_t* ip;
+    std::vector<uint8_t> opcode;
 public:
     Generator();
     void free();
-    InterpretResult run(const std::string source);
+    InterpretResult main(const std::string source);
 
 };
 
