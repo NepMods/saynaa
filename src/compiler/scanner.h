@@ -1,7 +1,7 @@
 #ifndef lang_scanner_h
 #define lang_scanner_h
 
-#include "common.h"
+#include "../shared/common.h"
 
 typedef enum {
   // Single-character tokens.

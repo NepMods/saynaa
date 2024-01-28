@@ -1,9 +1,4 @@
-#include "common.h"
-#include "compiler.h"
 #include "generator.h"
-#include <cstdarg>
-
-Generator generator; 
 
 Generator::Generator() {
     assembly_data << "section .data\n";
@@ -33,15 +28,22 @@ Generator::Generator() {
     assembly_text << "    ret\n";
 
     assembly_main << "_start:\n";
-
 }
 
 void Generator::free() {
+  variable.clear();
+  value->free();
+}
 
+auto Generator::checkVariable(std::string name) {
+  return std::ranges::find_if(variable, [&](const Variable& var) {
+      return var.name == name;
+  });
 }
 
 void Generator::runtimeError(const std::string error) {
-  cout << error << endl;
+  std::cerr << error << std::endl;
+  exit(1);
 }
 
 void Generator::push(const std::string& reg) {
@@ -80,13 +82,58 @@ InterpretResult Generator::run() {
     for(int i = 0; i != opcode.size(); i++) {
       switch (opcode[i]) {
         case OP_CONSTANT: {
-          assembly_main << "    mov rax, " << std::to_string(value->value[opcode[++i]]) << "\n";
-          push("rax");
+          auto val = value->value[opcode[++i]];
+
+          // this code below doing: if val stored int {...}, else if stored string {...}
+          if(std::holds_alternative<int>(val)) {
+            int output = std::get<int>(val);
+            assembly_main << "    mov rax, " << std::to_string(output) << "\n";
+            push("rax");
+          } else if (std::holds_alternative<std::string>(val)){
+            std::string output = std::get<std::string>(val);
+            std::cout << "Soon adding: " << output << std::endl;
+          }
           break;
         }
         case OP_NIL:  break;
         case OP_TRUE:  break;
         case OP_FALSE:  break;
+        case OP_POP: /*pop();*/ break;
+        case OP_GET_LOCAL: {
+          auto val = value->value[opcode[++i]];
+
+          // this code below doing: if val stored int {...}, else if stored string {...}
+          if(std::holds_alternative<int>(val)) {
+            int output = std::get<int>(val);
+            runtimeError("expected an identifier!");
+          } else if (std::holds_alternative<std::string>(val)){
+            std::string output = std::get<std::string>(val);
+            auto iter = checkVariable(output);
+            if(iter == variable.end()) {
+              runtimeError("variable not defined!"); // error is: var 10 = 29; 
+            }
+            std::stringstream offset;
+            offset << "QWORD [rsp + " << (stackSize - iter->stackLocation) * 8 << "]";
+            push(offset.str());
+          }
+
+          break;
+        }
+        case OP_DEFINE_LOCAL: {
+          auto val = value->value[opcode[++i]];
+
+          // this code below doing: if val stored int {...}, else if stored string {...}
+          if(std::holds_alternative<int>(val)) {
+            int output = std::get<int>(val);
+            runtimeError("expected an identifier!");
+          } else if (std::holds_alternative<std::string>(val)){
+            std::string output = std::get<std::string>(val);
+            if(variable.end() != checkVariable(output))
+              runtimeError("variable before defined!");
+            variable.push_back({output, stackSize});
+          }
+          break;
+        }
         case OP_EQUAL: {
           break;
         }
@@ -135,8 +182,8 @@ InterpretResult Generator::main(const std::string source) {
     return INTERPRET_COMPILE_ERROR;
   }
 
-  generator.value = &val;
-  generator.opcode = generator.value->opcode;
+  value = &val;
+  opcode = value->opcode;
 
   InterpretResult result = run();
 

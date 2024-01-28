@@ -1,8 +1,8 @@
 #ifndef lang_debug_h
 #define lang_debug_h
 
-#include "common.h"
-#include "public.h"
+#include "../shared/common.h"
+#include "../shared/value.h"
 
 class Debug {
 private:
@@ -13,7 +13,7 @@ public:
     Debug(Value value);
     void disassemble(const std::string name);
 
-    std::vector<int> value;
+    std::vector<std::variant<int, std::string>> value;
     std::vector<uint8_t> opcode;
     std::vector<int> lines;
 };

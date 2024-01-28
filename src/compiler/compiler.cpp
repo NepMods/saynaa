@@ -1,6 +1,3 @@
-#include <stdio.h>
-
-#include "common.h"
 #include "compiler.h"
 #include "scanner.h"
 
@@ -8,7 +5,6 @@ typedef struct {
   Token current;
   Token previous;
   bool hadError;
-  bool panicMode;
 } Parser;
 
 typedef enum {
@@ -42,19 +38,17 @@ static Value* currentValue() {
 }
 
 static void errorAt(Token* token, const std::string message) {
-  if (parser.panicMode) return;
-  parser.panicMode = true;
-  cerr << "[line " << token->line << "] Error";
+  std::cerr << "[line " << token->line << "] Error";
 
   if (token->type == TK_EOF) {
-    cerr << " at end";
+    std::cerr << " at end";
   } else if (token->type == TK_ERROR) {
     // Nothing.
   } else {
     fprintf(stderr, " at '%.*s'", token->length, token->start);
   }
 
-  cerr << ": " << message << endl;
+  std::cerr << ": " << message << std::endl;
   parser.hadError = true;
 }
 
@@ -97,7 +91,8 @@ static bool match(TokenType type) {
 }
 
 static void emitByte(uint8_t byte) {
-  currentValue()->write(byte, parser.previous.line);
+  currentValue()->opcode.push_back(byte);
+  currentValue()->lines.push_back(parser.previous.line);
 }
 
 static void emitBytes(uint8_t byte1, uint8_t byte2) {
@@ -110,7 +105,9 @@ static void emitReturn() {
 }
 
 static uint8_t makeConstant(int value) {
-  int constant = currentValue()->addValue(value);
+  currentValue()->value.push_back(value);
+  int constant = currentValue()->value.size() -1;
+
   if (constant > UINT8_MAX) {
     error("Too many constants in one chunk.");
     return 0;
@@ -128,7 +125,7 @@ static void endCompiler() {
   #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) {
       Debug debug(*currentValue());
-      debug.disassemble("code");
+      debug.disassemble("opcode");
     }
   #endif
 }
@@ -138,6 +135,27 @@ static void statement();
 static void declaration();
 static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
+
+static uint8_t identifierConstant(Token* name) {
+  currentValue()->value.push_back(copyString(name->start, name->length));
+  int constant = currentValue()->value.size() -1;
+
+  if (constant > UINT8_MAX) {
+    error("Too many constants in one chunk.");
+    return 0;
+  }
+
+  return (uint8_t)constant;
+}
+
+static uint8_t parseVariable(const char* errorMessage) {
+  consume(TK_IDENTIFIER, errorMessage);
+  return identifierConstant(&parser.previous);
+}
+
+static void defineVariable(uint8_t global) {
+  emitBytes(OP_DEFINE_LOCAL, global);
+}
 
 static void binary() {
   TokenType operatorType = parser.previous.type;
@@ -178,6 +196,15 @@ static void number() {
   emitConstant((value));
 }
 
+static void namedVariable(Token name) {
+  uint8_t arg = identifierConstant(&name);
+  emitBytes(OP_GET_LOCAL, arg);
+}
+
+static void variable() {
+  namedVariable(parser.previous);
+}
+
 static void unary() {
   TokenType operatorType = parser.previous.type;
 
@@ -212,7 +239,7 @@ ParseRule rules[] = {
   [TK_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
   [TK_LESS]          = {NULL,     binary, PREC_COMPARISON},
   [TK_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
-  [TK_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
+  [TK_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
   [TK_STRING]        = {NULL,     NULL,   PREC_NONE},
   [TK_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TK_AND]           = {NULL,     NULL,   PREC_NONE},
@@ -257,6 +284,26 @@ static void expression() {
    parsePrecedence(PREC_ASSIGNMENT);
 }
 
+static void varDeclaration() {
+  uint8_t global = parseVariable("Expect variable name.");
+
+  if (match(TK_EQUAL)) {
+    expression();
+  } else {
+    emitByte(OP_NIL);
+  }
+  consume(TK_SEMICOLON,
+          "Expect ';' after variable declaration.");
+
+  defineVariable(global);
+}
+
+static void expressionStatement() {
+  expression();
+  consume(TK_SEMICOLON, "Expect ';' after expression.");
+  emitByte(OP_POP);
+}
+
 static void printStatement() {
   expression();
   consume(TK_SEMICOLON, "Expect ';' after value.");
@@ -264,12 +311,18 @@ static void printStatement() {
 }
 
 static void declaration() {
-  statement();
+  if (match(TK_VAR)) {
+    varDeclaration();
+  } else {
+    statement();
+  }
 }
 
 static void statement() {
   if (match(TK_PRINT)) {
     printStatement();
+  } else {
+    expressionStatement();
   }
 }
 
@@ -278,7 +331,6 @@ bool compile(const std::string source, Value* value) {
   compilingValue = value;
 
   parser.hadError = false;
-  parser.panicMode = false;
 
   advance();
   while (!match(TK_EOF)) {

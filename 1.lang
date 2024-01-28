@@ -1,2 +1,14 @@
-print(20-5*3);
-print(30);
+var x = 100;
+var y = 200;
+var z = 300;
+print(y);
+
+// ~ stack keep us three value, [300, 200, 100]                                      |       |
+// ~ this time, we need the location 2                                               |  300  | <- rsp[0]
+// ~ so push again location 2 to the top stack to use in print function:             ________
+// ~              push QWORD [rsp + 8]                                               |       |
+// ~ print function will pop up the top stack                                        |  200  | <- rsp[8]
+// ~                                                                                 ________
+// ~                                                                                 |       |
+// ~                                                                                 |  100  | <- rsp[16]
+// ~                                                                                 ________

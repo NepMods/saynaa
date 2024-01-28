@@ -3,7 +3,7 @@
 Debug::Debug(Value value) : value(value.value), opcode(value.opcode), lines(value.lines) {
 }
 void Debug::disassemble(const std::string name) {
-  cout << "== " << name << " ==" << endl;
+  std::cout << "== " << name << " ==" << std::endl;
 
   for (int offset = 0; offset < opcode.size();) {
     offset = disassembleInstruction(offset);
@@ -12,13 +12,12 @@ void Debug::disassemble(const std::string name) {
 
 int Debug::disassembleInstruction(int offset) {
   printf("%04d ", offset);
-  //cout << setw(4) << setfill('0') << offset << " ";
 
   if (offset > 0 &&
-      lines[offset] == lines[offset - 1]) {
-    cout << "   | ";
+    lines[offset] == lines[offset - 1]) {
+    std::cout << "   | ";
   } else {
-    cout << "   " << lines[offset] << " ";
+    std::cout << "   " << lines[offset] << " ";
   }
 
   uint8_t instruction = opcode[offset];
@@ -31,6 +30,12 @@ int Debug::disassembleInstruction(int offset) {
       return simpleInstruction("OP_TRUE", offset);
     case OP_FALSE:
       return simpleInstruction("OP_FALSE", offset);
+    case OP_POP:
+      return simpleInstruction("OP_POP", offset);
+    case OP_GET_LOCAL:
+      return constantInstruction("OP_GET_LOCAL", offset);
+    case OP_DEFINE_LOCAL:
+      return constantInstruction("OP_DEFINE_LOCAL", offset);
     case OP_EQUAL:
       return simpleInstruction("OP_EQUAL", offset);
     case OP_GREATER:
@@ -54,21 +59,29 @@ int Debug::disassembleInstruction(int offset) {
     case OP_RETURN:
       return simpleInstruction("OP_RETURN", offset);
     default:
-      cout << "Unknown opcode " << instruction << endl;
+      std::cout << "Unknown opcode " << instruction << std::endl;
       return offset + 1;
   }
 }
 
 int Debug::simpleInstruction(const std::string name, int offset) {
-  cout << name << endl;
+  std::cout << name << std::endl;
   return offset + 1;
 }
 
 int Debug::constantInstruction(const std::string name, int offset) {
   uint8_t val = opcode[offset +1];
-  cout << left << setw(16) << name << setw(4) << val << "'";
-  //constants.printValue(constants.values[constant]);
-  cout << value[val];
-  cout << "'" << endl;
+  std::cout << std::left << std::setw(16) << name << std::setw(4) << val << "'";
+
+  // this code below doing: if value stored int (print int), else if stored string (print string)
+  if(std::holds_alternative<int>(value[val])) {
+    int output = std::get<int>(value[val]);
+    std::cout << output;
+  } else if (std::holds_alternative<std::string>(value[val])){
+    std::string output = std::get<std::string>(value[val]);
+    std::cout << output;
+  }
+
+  std::cout << "'" << std::endl;
   return offset + 2;
 }

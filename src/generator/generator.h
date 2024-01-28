@@ -1,8 +1,9 @@
 #ifndef lang_generator_h
 #define lang_generator_h
 
-#include "public.h"
-#include "common.h"
+#include "../compiler/compiler.h"
+#include "../shared/value.h"
+#include "../shared/common.h"
 
 #define STACK_MAX 256
 
@@ -24,9 +25,11 @@ private:
 
     InterpretResult run();
     void runtimeError(const std::string error);
+    auto checkVariable(std::string name);
     void push(const std::string &reg);
     void pop(const std::string &reg);
 
+    std::vector<Variable> variable;
     Value* value;
     int stackSize;
 
@@ -40,6 +43,4 @@ public:
     InterpretResult main(const std::string source);
 
 };
-
-extern Generator generator;
 #endif

@@ -8,6 +8,9 @@ typedef enum {
    OP_NIL,
    OP_TRUE,
    OP_FALSE,
+   OP_POP,
+   OP_DEFINE_LOCAL,
+   OP_GET_LOCAL,
    OP_EQUAL,
    OP_GREATER,
    OP_LESS,
@@ -21,17 +24,21 @@ typedef enum {
    OP_RETURN,
 } OpCode;
 
-class Value {
-private:
-public:
-    Value();
-    int addValue(int value);
-    void write(uint8_t opcode, int line);
-    void free();
-
-    std::vector<int> value;
+typedef struct {
+    std::vector<std::variant<int, std::string>> value;
     std::vector<int> lines;
     std::vector<uint8_t> opcode;
-};
+
+    void free() {
+        value.clear();
+        lines.clear();
+        opcode.clear();
+    }
+} Value;
+
+typedef struct {
+    std::string name;       // variable name
+    int stackLocation;      // stack location in assembly
+} Variable;
 
 #endif
