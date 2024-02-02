@@ -176,8 +176,9 @@ InterpretResult Generator::run() {
 
 InterpretResult Generator::main(const std::string source) {
   Value val;
+  Parser parser;
 
-  if (!compile(source, &val)) {
+  if (!parser.compile(source, &val)) {
     val.free();
     return INTERPRET_COMPILE_ERROR;
   }

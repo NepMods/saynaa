@@ -1,43 +1,6 @@
 #include "compiler.h"
-#include "scanner.h"
 
-typedef struct {
-  Token current;
-  Token previous;
-  bool hadError;
-} Parser;
-
-typedef enum {
-  PREC_NONE,
-  PREC_ASSIGNMENT,  // =
-  PREC_OR,          // or
-  PREC_AND,         // and
-  PREC_EQUALITY,    // == !=
-  PREC_COMPARISON,  // < > <= >=
-  PREC_TERM,        // + -
-  PREC_FACTOR,      // * /
-  PREC_UNARY,       // ! -
-  PREC_CALL,        // . ()
-  PREC_PRIMARY
-} Precedence;
-
-typedef void (*ParseFn)();
-
-typedef struct {
-  ParseFn prefix;
-  ParseFn infix;
-  Precedence precedence;
-} ParseRule;
-
-Parser parser;
-Scanner scanner;
-Value* compilingValue;
-
-static Value* currentValue() {
-  return compilingValue;
-}
-
-static void errorAt(Token* token, const std::string message) {
+void Parser::errorAt(Token* token, const std::string message) {
   std::cerr << "[line " << token->line << "] Error";
 
   if (token->type == TK_EOF) {
@@ -49,33 +12,33 @@ static void errorAt(Token* token, const std::string message) {
   }
 
   std::cerr << ": " << message << std::endl;
-  parser.hadError = true;
+  hadError = true;
 }
 
-static void error(const std::string message) {
-  errorAt(&parser.previous, message);
+void Parser::error(const std::string message) {
+  errorAt(&previous, message);
 }
 
-static void errorAtCurrent(const std::string message) {
-  errorAt(&parser.current, message);
+void Parser::errorAtCurrent(const std::string message) {
+  errorAt(&current, message);
 }
 
-static void advance() {
-  parser.previous = parser.current;
+void Parser::advance() {
+  previous = current;
 
   for (;;) {
-    parser.current = scanner.scanToken();
-    if (parser.current.type != TK_ERROR) break;
+    current = scanner.scanToken();
+    if (current.type != TK_ERROR) break;
 
-    errorAtCurrent(parser.current.start);
+    errorAtCurrent(current.start);
   }
 }
 
-static bool check(TokenType type) {
-  return parser.current.type == type;
+bool Parser::check(TokenType type) {
+  return current.type == type;
 }
 
-static void consume(TokenType type, const std::string message) {
+void Parser::consume(TokenType type, const std::string message) {
   if (check(type)) {
     advance();
     return;
@@ -84,29 +47,29 @@ static void consume(TokenType type, const std::string message) {
   errorAtCurrent(message);
 }
 
-static bool match(TokenType type) {
+bool Parser::match(TokenType type) {
   if (!check(type)) return false;
   advance();
   return true;
 }
 
-static void emitByte(uint8_t byte) {
-  currentValue()->opcode.push_back(byte);
-  currentValue()->lines.push_back(parser.previous.line);
+void Parser::emitByte(uint8_t byte) {
+  ParserValue->opcode.push_back(byte);
+  ParserValue->lines.push_back(previous.line);
 }
 
-static void emitBytes(uint8_t byte1, uint8_t byte2) {
+void Parser::emitBytes(uint8_t byte1, uint8_t byte2) {
   emitByte(byte1);
   emitByte(byte2);
 }
 
-static void emitReturn() {
+void Parser::emitReturn() {
   emitByte(OP_RETURN);
 }
 
-static uint8_t makeConstant(int value) {
-  currentValue()->value.push_back(value);
-  int constant = currentValue()->value.size() -1;
+uint8_t Parser::makeConstant(int value) {
+  ParserValue->value.push_back(value);
+  int constant = ParserValue->value.size() -1;
 
   if (constant > UINT8_MAX) {
     error("Too many constants in one chunk.");
@@ -116,29 +79,23 @@ static uint8_t makeConstant(int value) {
   return (uint8_t)constant;
 }
 
-static void emitConstant(int value) {
+void Parser::emitConstant(int value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
-static void endCompiler() {
+void Parser::endCompiler() {
   emitReturn();
   #ifdef DEBUG_PRINT_CODE
-    if (!parser.hadError) {
-      Debug debug(*currentValue());
-      debug.disassemble("opcode");
+    if (!hadError) {
+      Debug debug(*ParserValue);
+      debug.disassemble("OPCODE");
     }
   #endif
 }
 
-static void expression();
-static void statement();
-static void declaration();
-static ParseRule* getRule(TokenType type);
-static void parsePrecedence(Precedence precedence);
-
-static uint8_t identifierConstant(Token* name) {
-  currentValue()->value.push_back(copyString(name->start, name->length));
-  int constant = currentValue()->value.size() -1;
+uint8_t Parser::identifierConstant(Token* name) {
+  ParserValue->value.push_back(copyString(name->start, name->length));
+  int constant = ParserValue->value.size() -1;
 
   if (constant > UINT8_MAX) {
     error("Too many constants in one chunk.");
@@ -148,19 +105,19 @@ static uint8_t identifierConstant(Token* name) {
   return (uint8_t)constant;
 }
 
-static uint8_t parseVariable(const char* errorMessage) {
-  consume(TK_IDENTIFIER, errorMessage);
-  return identifierConstant(&parser.previous);
+uint8_t Parser::parseVariable(const char* errorMessage) {
+  consume(TK_NAME, errorMessage);
+  return identifierConstant(&previous);
 }
 
-static void defineVariable(uint8_t global) {
-  emitBytes(OP_DEFINE_LOCAL, global);
+void Parser::defineVariable(uint8_t local) {
+  emitBytes(OP_DEFINE_LOCAL, local);
 }
 
-static void binary() {
-  TokenType operatorType = parser.previous.type;
-  ParseRule* rule = getRule(operatorType);
-  parsePrecedence((Precedence)(rule->precedence + 1));
+void Parser::binary() {
+  TokenType operatorType = previous.type;
+  ParseRule rule = getRule(operatorType);
+  parsePrecedence((Precedence)(rule.precedence + 1));
 
   switch (operatorType) {
     case TK_BANG_EQUAL:    emitBytes(OP_EQUAL, OP_NOT); break;
@@ -177,8 +134,8 @@ static void binary() {
   }
 }
 
-static void literal() {
-  switch (parser.previous.type) {
+void Parser::literal() {
+  switch (previous.type) {
     case TK_FALSE: emitByte(OP_FALSE); break;
     case TK_NULL: emitByte(OP_NIL); break;
     case TK_TRUE: emitByte(OP_TRUE); break;
@@ -186,27 +143,27 @@ static void literal() {
   }
 }
 
-static void grouping() {
+void Parser::grouping() {
   expression();
   consume(TK_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void number() {
-  double value = strtod(parser.previous.start, NULL);
+void Parser::number() {
+  double value = strtod(previous.start, nullptr);
   emitConstant((value));
 }
 
-static void namedVariable(Token name) {
+void Parser::namedVariable(Token name) {
   uint8_t arg = identifierConstant(&name);
   emitBytes(OP_GET_LOCAL, arg);
 }
 
-static void variable() {
-  namedVariable(parser.previous);
+void Parser::variable() {
+  namedVariable(previous);
 }
 
-static void unary() {
-  TokenType operatorType = parser.previous.type;
+void Parser::unary() {
+  TokenType operatorType = previous.type;
 
   // Compile the operand.
   parsePrecedence(PREC_UNARY);
@@ -219,72 +176,73 @@ static void unary() {
   }
 }
 
-ParseRule rules[] = {
-  [TK_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
-  [TK_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
-  [TK_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
-  [TK_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
-  [TK_COMMA]         = {NULL,     NULL,   PREC_NONE},
-  [TK_DOT]           = {NULL,     NULL,   PREC_NONE},
-  [TK_MINUS]         = {unary,    binary, PREC_TERM},
-  [TK_PLUS]          = {NULL,     binary, PREC_TERM},
-  [TK_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
-  [TK_SLASH]         = {NULL,     binary, PREC_FACTOR},
-  [TK_STAR]          = {NULL,     binary, PREC_FACTOR},
-  [TK_BANG]          = {unary,    NULL,   PREC_NONE},
-  [TK_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
-  [TK_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-  [TK_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
-  [TK_GREATER]       = {NULL,     binary, PREC_COMPARISON},
-  [TK_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
-  [TK_LESS]          = {NULL,     binary, PREC_COMPARISON},
-  [TK_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
-  [TK_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
-  [TK_STRING]        = {NULL,     NULL,   PREC_NONE},
-  [TK_NUMBER]        = {number,   NULL,   PREC_NONE},
-  [TK_AND]           = {NULL,     NULL,   PREC_NONE},
-  [TK_ELSE]          = {NULL,     NULL,   PREC_NONE},
-  [TK_FALSE]         = {literal,  NULL,   PREC_NONE},
-  [TK_FOR]           = {NULL,     NULL,   PREC_NONE},
-  [TK_FUNCTION]      = {NULL,     NULL,   PREC_NONE},
-  [TK_IF]            = {NULL,     NULL,   PREC_NONE},
-  [TK_NULL]          = {literal,  NULL,   PREC_NONE},
-  [TK_OR]            = {NULL,     NULL,   PREC_NONE},
-  [TK_PRINT]         = {NULL,     NULL,   PREC_NONE},
-  [TK_RETURN]        = {NULL,     NULL,   PREC_NONE},
-  [TK_TRUE]          = {literal,  NULL,   PREC_NONE},
-  [TK_VAR]           = {NULL,     NULL,   PREC_NONE},
-  [TK_WHILE]         = {NULL,     NULL,   PREC_NONE},
-  [TK_ERROR]         = {NULL,     NULL,   PREC_NONE},
-  [TK_EOF]           = {NULL,     NULL,   PREC_NONE},
-};
-
-static void parsePrecedence(Precedence precedence) {
+void Parser::parsePrecedence(Precedence precedence) {
   advance();
-  ParseFn prefixRule = getRule(parser.previous.type)->prefix;
-  if (prefixRule == NULL) {
+  ParseFn prefixRule = getRule(previous.type).prefix;
+  if (prefixRule == nullptr) {
     error("Expect expression.");
     return;
   }
 
-  prefixRule();
+  (this->*prefixRule)();
 
-  while (precedence <= getRule(parser.current.type)->precedence) {
+  while (precedence <= getRule(current.type).precedence) {
     advance();
-    ParseFn infixRule = getRule(parser.previous.type)->infix;
-    infixRule();
+    ParseFn infixRule = getRule(previous.type).infix;
+    (this->*infixRule)();
   }
 }
 
-static ParseRule* getRule(TokenType type) {
-  return &rules[type];
+Parser::ParseRule Parser::getRule(TokenType type) {
+                      // Prefix               Infix              Infix Precedence
+  #define NO_RULE        {nullptr,            nullptr,           PREC_NONE}
+  ParseRule rules[TK_EOF+1] = {
+    [TK_LEFT_PAREN]    = {&Parser::grouping,  nullptr,           PREC_NONE},
+    [TK_RIGHT_PAREN]   = NO_RULE,
+    [TK_LEFT_BRACE]    = NO_RULE,
+    [TK_RIGHT_BRACE]   = NO_RULE,
+    [TK_COMMA]         = NO_RULE,
+    [TK_DOT]           = NO_RULE,
+    [TK_MINUS]         = {&Parser::unary,     &Parser::binary,   PREC_TERM},
+    [TK_PLUS]          = {nullptr,            &Parser::binary,   PREC_TERM},
+    [TK_SEMICOLON]     = NO_RULE,
+    [TK_SLASH]         = {nullptr,            &Parser::binary,   PREC_FACTOR},
+    [TK_STAR]          = {nullptr,            &Parser::binary,   PREC_FACTOR},
+    [TK_BANG]          = {&Parser::unary,     nullptr,           PREC_NONE},
+    [TK_BANG_EQUAL]    = {nullptr,            &Parser::binary,   PREC_EQUALITY},
+    [TK_EQUAL]         = NO_RULE,
+    [TK_EQUAL_EQUAL]   = {nullptr,            &Parser::binary,   PREC_EQUALITY},
+    [TK_GREATER]       = {nullptr,            &Parser::binary,   PREC_COMPARISON},
+    [TK_GREATER_EQUAL] = {nullptr,            &Parser::binary,   PREC_COMPARISON},
+    [TK_LESS]          = {nullptr,            &Parser::binary,   PREC_COMPARISON},
+    [TK_LESS_EQUAL]    = {nullptr,            &Parser::binary,   PREC_COMPARISON},
+    [TK_NAME]          = {&Parser::variable,  nullptr,           PREC_NONE},
+    [TK_STRING]        = NO_RULE,
+    [TK_NUMBER]        = {&Parser::number,    nullptr,           PREC_NONE},
+    [TK_AND]           = NO_RULE,
+    [TK_ELSE]          = NO_RULE,
+    [TK_FALSE]         = {&Parser::literal,   nullptr,           PREC_NONE},
+    [TK_FOR]           = NO_RULE,
+    [TK_FUNCTION]      = NO_RULE,
+    [TK_IF]            = NO_RULE,
+    [TK_NULL]          = {&Parser::literal,   nullptr,           PREC_NONE},
+    [TK_OR]            = NO_RULE,
+    [TK_PRINT]         = NO_RULE,
+    [TK_RETURN]        = NO_RULE,
+    [TK_TRUE]          = {&Parser::literal,   nullptr,           PREC_NONE},
+    [TK_LET]           = NO_RULE,
+    [TK_WHILE]         = NO_RULE,
+    [TK_ERROR]         = NO_RULE,
+    [TK_EOF]           = NO_RULE,
+  };
+  return rules[type];
 }
 
-static void expression() {
+void Parser::expression() {
    parsePrecedence(PREC_ASSIGNMENT);
 }
 
-static void varDeclaration() {
+void Parser::varDeclaration() {
   uint8_t global = parseVariable("Expect variable name.");
 
   if (match(TK_EQUAL)) {
@@ -298,27 +256,27 @@ static void varDeclaration() {
   defineVariable(global);
 }
 
-static void expressionStatement() {
+void Parser::expressionStatement() {
   expression();
   consume(TK_SEMICOLON, "Expect ';' after expression.");
   emitByte(OP_POP);
 }
 
-static void printStatement() {
+void Parser::printStatement() {
   expression();
   consume(TK_SEMICOLON, "Expect ';' after value.");
   emitByte(OP_PRINT);
 }
 
-static void declaration() {
-  if (match(TK_VAR)) {
+void Parser::declaration() {
+  if (match(TK_LET)) {
     varDeclaration();
   } else {
     statement();
   }
 }
 
-static void statement() {
+void Parser::statement() {
   if (match(TK_PRINT)) {
     printStatement();
   } else {
@@ -326,16 +284,16 @@ static void statement() {
   }
 }
 
-bool compile(const std::string source, Value* value) {
+bool Parser::compile(const std::string source, Value* value) {
   scanner.put(source.c_str());
-  compilingValue = value;
+  ParserValue = value;
 
-  parser.hadError = false;
+  hadError = false;
 
   advance();
   while (!match(TK_EOF)) {
     declaration();
   }
   endCompiler();
-  return !parser.hadError;
+  return !hadError;
 }

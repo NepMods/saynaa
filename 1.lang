@@ -1,6 +1,6 @@
-var x = 100;
-var y = 200;
-var z = 300;
+let x = 100;
+let y = 200;
+let z = 300;
 print(y);
 
 // ~ stack keep us three value, [300, 200, 100]                                      |       |

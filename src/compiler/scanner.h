@@ -28,7 +28,7 @@ typedef enum {
   TK_LESS_EQUAL,
 
   // Literals.
-  TK_IDENTIFIER,
+  TK_NAME,
   TK_STRING,
   TK_NUMBER,
 
@@ -44,7 +44,7 @@ typedef enum {
   TK_PRINT,
   TK_RETURN,
   TK_TRUE,
-  TK_VAR,
+  TK_LET,
   TK_WHILE,
 
   TK_ERROR,
@@ -77,7 +77,7 @@ static _Keyword _keywords[] =  {
   { "or",       2, TK_OR       },
   { "return",   6, TK_RETURN   },
   { "true",     4, TK_TRUE     },
-  { "var",      3, TK_VAR      },
+  { "let",      3, TK_LET      },
   { "while",    5, TK_WHILE    },
 
   { NULL,   0, (TokenType)(0) }, // Sentinel to mark the end of the array.
@@ -105,10 +105,8 @@ private:
     const char* current;
     int line;
 public:
-    Scanner();
     void put(const char* source);
     Token scanToken();
-
 };
 
 #endif

@@ -1,9 +1,5 @@
 #include "scanner.h"
 
-Scanner::Scanner()  {
-    
-}
-
 void Scanner::put(const char* source) {
   start = (source);
   current = (source);
@@ -85,7 +81,7 @@ Token Scanner::identifier() {
   while (isAlpha(peek()) || isDigit(peek())) advance();
 
   const char* name_start = start;
-  TokenType type = TK_IDENTIFIER;
+  TokenType type = TK_NAME;
 
   int length = (int)(current - name_start);
   for (int i = 0; _keywords[i].identifier != NULL; i++) {
