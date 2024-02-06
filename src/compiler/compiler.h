@@ -5,27 +5,26 @@
 
 #include "../shared/common.h"
 #include "../shared/value.h"
-#include "../utils/utils.h"
 #include "../utils/debug.h"
 
-class Parser{
+class Parser {
   Token current;
   Token previous;
   bool hadError;
   Scanner scanner;
-  Value* ParserValue;
+  Bytecode *bytecode;
 
   typedef enum {
     PREC_NONE,
-    PREC_ASSIGNMENT,  // =
-    PREC_OR,          // or
-    PREC_AND,         // and
-    PREC_EQUALITY,    // == !=
-    PREC_COMPARISON,  // < > <= >=
-    PREC_TERM,        // + -
-    PREC_FACTOR,      // * /
-    PREC_UNARY,       // ! -
-    PREC_CALL,        // . ()
+    PREC_ASSIGNMENT, // =
+    PREC_OR,         // or
+    PREC_AND,        // and
+    PREC_EQUALITY,   // == !=
+    PREC_COMPARISON, // < > <= >=
+    PREC_TERM,       // + -
+    PREC_FACTOR,     // * /
+    PREC_UNARY,      // ! -
+    PREC_CALL,       // . ()
     PREC_PRIMARY
   } Precedence;
 
@@ -36,22 +35,24 @@ class Parser{
     Precedence precedence;
   } ParseRule;
 
-  void errorAt(Token* token, const std::string message);
+  void errorAt(Token *token, const std::string message);
   void error(const std::string message);
   void errorAtCurrent(const std::string message);
   void advance();
   bool check(TokenType type);
   void consume(TokenType type, const std::string message);
   bool match(TokenType type);
-  void emitByte(uint8_t byte);
-  void emitBytes(uint8_t byte1, uint8_t byte2);
+  void emitByte(uint32_t byte);
+  void emitBytes(uint32_t byte1, uint32_t byte2);
   void emitReturn();
-  uint8_t makeConstant(int value);
+  uint32_t makeConstant(int value);
+  uint32_t makeConstant(std::string value);
   void emitConstant(int value);
+  void emitConstant(std::string value);
   void endCompiler();
-  uint8_t identifierConstant(Token* name);
-  uint8_t parseVariable(const char* errorMessage);
-  void defineVariable(uint8_t global);
+  uint32_t identifierConstant(Token *name);
+  uint32_t parseVariable(const char *errorMessage);
+  void defineVariable(uint32_t global);
   void binary();
   void literal();
   void grouping();
@@ -68,8 +69,10 @@ class Parser{
   void printStatement();
   void declaration();
   void statement();
+
 public:
-  bool compile(const std::string source, Value* value);
+  Parser(const std::string &source);
+  bool compile(Bytecode *bcode);
 };
 
 #endif

@@ -4,41 +4,54 @@
 #include "common.h"
 
 typedef enum {
-   OP_CONSTANT,
-   OP_NIL,
-   OP_TRUE,
-   OP_FALSE,
-   OP_POP,
-   OP_DEFINE_LOCAL,
-   OP_GET_LOCAL,
-   OP_EQUAL,
-   OP_GREATER,
-   OP_LESS,
-   OP_ADD,
-   OP_SUBTRACT,
-   OP_MULTIPLY,
-   OP_DIVIDE,
-   OP_NOT,
-   OP_NEGATE,
-   OP_PRINT,
-   OP_RETURN,
+  OP_CONSTANT,
+  OP_NULL,
+  OP_TRUE,
+  OP_FALSE,
+  OP_POP,
+  OP_DEFINE_LOCAL,
+  OP_GET_LOCAL,
+  OP_EQUAL,
+  OP_GREATER,
+  OP_LESS,
+  OP_ADD,
+  OP_SUBTRACT,
+  OP_MULTIPLY,
+  OP_DIVIDE,
+  OP_NOT,
+  OP_NEGATE,
+  OP_PRINT,
+  OP_RETURN,
 } OpCode;
 
 typedef struct {
-    std::vector<std::variant<int, std::string>> value;
-    std::vector<int> lines;
-    std::vector<uint8_t> opcode;
+  std::vector<std::string> name;
+  std::vector<std::variant<int, std::string>> value;
+  std::vector<int> lines;
+  std::vector<uint32_t> opcode;
 
-    void free() {
-        value.clear();
-        lines.clear();
-        opcode.clear();
-    }
-} Value;
+  void free() {
+    name.clear();
+    value.clear();
+    lines.clear();
+    opcode.clear();
+  }
+} Bytecode;
 
 typedef struct {
-    std::string name;       // variable name
-    int stackLocation;      // stack location in assembly
+  std::vector<std::string> name;
+  std::vector<std::variant<int, std::string>> value;
+  std::vector<int> stackLocation;
+
+  void free() {
+    name.clear();
+    value.clear();
+  }
 } Variable;
+
+typedef struct {
+  std::string name;  // variable name
+  uint32_t stackLocation; // stack location in assembly
+} stackVariable;
 
 #endif

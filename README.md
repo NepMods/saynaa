@@ -1,6 +1,17 @@
 # myCompiler
 Welcome to myCompiler - written in c++ language, from scratch
 
+## code look like this
+```
+let str = "result: ";
+
+print(str);
+print(10*20);
+```
+
+## Code Format
+i am used clang-format inside vscode
+
 ## build
 ```
 make
