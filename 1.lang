@@ -1,2 +1,7 @@
-let x = "Hello World";
-print(x);
+let str = "result: ";
+let x = 10;
+let y = 20;
+let z = x*y;
+
+print(str);
+print(z);
