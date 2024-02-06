@@ -133,8 +133,9 @@ InterpretResult Generator::run() {
         runtimeError("variable not defined!"); // error is: var 10 = 29;
       }
       std::stringstream offset;
-      offset << "qword [rsp + " << (stackSize - iter->stackLocation) * 8 << "]";
-      push(currentType[stackSize], offset.str());
+      uint32_t location = stackSize - iter->stackLocation;
+      offset << "qword [rsp + " << location * 8 << "]";
+      push(currentType[stackSize - location], offset.str());
       break;
     }
     case OP_DEFINE_LOCAL: {

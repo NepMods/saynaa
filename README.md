@@ -4,9 +4,12 @@ Welcome to myCompiler - written in c++ language, from scratch
 ## code look like this
 ```
 let str = "result: ";
+let x = 10;
+let y = 20;
+let z = x*y;
 
 print(str);
-print(10*20);
+print(z);
 ```
 
 ## Code Format
