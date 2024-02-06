@@ -1,14 +1,2 @@
-let x = 100;
-let y = 200;
-let z = 300;
-print(y);
-
-// ~ stack keep us three value, [300, 200, 100]                                      |       |
-// ~ this time, we need the location 2                                               |  300  | <- rsp[0]
-// ~ so push again location 2 to the top stack to use in print function:             ________
-// ~              push QWORD [rsp + 8]                                               |       |
-// ~ print function will pop up the top stack                                        |  200  | <- rsp[8]
-// ~                                                                                 ________
-// ~                                                                                 |       |
-// ~                                                                                 |  100  | <- rsp[16]
-// ~                                                                                 ________
+let x = "Hello World";
+print(x);

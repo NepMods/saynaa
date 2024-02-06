@@ -1,22 +1,24 @@
-#include "../shared/common.h"
 #include "../generator/generator.h"
+#include "../shared/common.h"
 
-int main(int argc, const char* argv[]){
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <input_file>\n";
-        return 1;
-    }
+int main(int argc, const char *argv[]) {
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << " <input_file>\n";
+    return 1;
+  }
+  std::string source = readFile(argv[1]);
+  Parser parser(source);
 
-    std::ifstream inputFile(argv[1]);
-    if (!inputFile.is_open()) {
-        std::cerr << "Error opening file: " << argv[1] << "\n";
-        return 1;
-    }
-    std::string source((std::istreambuf_iterator<char>(inputFile)),
-                       std::istreambuf_iterator<char>());
+  Bytecode bytecode;
+  bool hadError = parser.compile(&bytecode);
+  if (hadError) {
+    std::cerr << "Compilling Failed!" << std::endl;
+    return 1;
+  }
 
-    Generator gen;
-    gen.main(source);
-    gen.free();
-    return 0;
+  Generator gen;
+  gen.main(bytecode);
+  gen.free();
+  bytecode.free();
+  return 0;
 }
