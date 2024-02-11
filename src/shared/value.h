@@ -50,7 +50,7 @@ typedef struct {
 } Variable;
 
 typedef struct {
-  std::string name;  // variable name
+  std::string name;       // variable name
   uint32_t stackLocation; // stack location in assembly
 } stackVariable;
 

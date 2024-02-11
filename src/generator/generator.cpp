@@ -1,9 +1,44 @@
 #include "generator.h"
 
-Generator::Generator() {
+Generator::Generator(std::string filename) : assembly_filename(filename) {
+
   assembly_data << "section .data\n";
   assembly_text << "section .text\n";
   assembly_text << "global _start\n";
+
+  assembly_text << "\nallocate:; allocate(size)\n";
+  assembly_text << "    push rbp\n";
+  assembly_text << "    mov rbp, rsp\n";
+  assembly_text << "    mov rax, 9\n";
+  assembly_text << "    xor rdi, rdi\n";
+  assembly_text << "    mov rsi, qword[rbp+16]\n";
+  assembly_text << "    mov rdx, 3\n";
+  assembly_text << "    mov r10, 0x22\n";
+  assembly_text << "    xor r8, r8\n";
+  assembly_text << "    xor r9, r9\n";
+  assembly_text << "    syscall\n";
+  assembly_text << "    pop rbp\n";
+  assembly_text << "    \n";
+  assembly_text << "    ; remove stack parameter\n";
+  assembly_text << "    mov rbx, qword[rsp]\n";
+  assembly_text << "    add rsp, 16\n";
+  assembly_text << "    push rbx\n";
+  assembly_text << "    ret\n";
+
+  assembly_text << "\nfree:; free(address, size)\n";
+  assembly_text << "    push rbp\n";
+  assembly_text << "    mov rbp, rsp\n";
+  assembly_text << "    mov rax, 11\n";
+  assembly_text << "    mov rdi, qword[rbp+16] ; address\n";
+  assembly_text << "    mov rsi, qword[rbp+24] ; size\n";
+  assembly_text << "    syscall\n";
+  assembly_text << "    pop rbp\n";
+  assembly_text << "    \n";
+  assembly_text << "    ; remove stack parameter\n";
+  assembly_text << "    mov rbx, qword[rsp]\n";
+  assembly_text << "    add rsp, 24\n";
+  assembly_text << "    push rbx\n";
+  assembly_text << "    ret\n";
 
   assembly_text << "\nprint_int:\n";
   assembly_text << "    mov    eax, edi\n";
@@ -26,6 +61,7 @@ Generator::Generator() {
   assembly_text << "    syscall\n";
   assembly_text << "    add    rsp, 24\n";
   assembly_text << "    ret\n";
+
   assembly_text << "\nprint_str:\n";
   assembly_text << "    push rbp\n";
   assembly_text << "    mov rbp, rsp\n";
@@ -180,17 +216,6 @@ InterpretResult Generator::run() {
       break;
     }
     case OP_RETURN: {
-
-      assembly_main << "    mov rax, 60\n";
-      assembly_main << "    xor rdi, rdi\n";
-      assembly_main << "    syscall\n";
-
-      std::ofstream outputFile("nasm.asm");
-      outputFile << assembly_data.str();
-      outputFile << assembly_text.str();
-      outputFile << assembly_main.str();
-      outputFile.close();
-
       return INTERPRET_OK;
     }
     }
@@ -205,5 +230,16 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   opcode = bytecode->opcode;
 
   InterpretResult result = run();
+
+  assembly_main << "    mov rax, 60\n";
+  assembly_main << "    xor rdi, rdi\n";
+  assembly_main << "    syscall\n";
+
+  std::ofstream outputFile(assembly_filename);
+  outputFile << assembly_data.str();
+  outputFile << assembly_text.str();
+  outputFile << assembly_main.str();
+  outputFile.close();
+
   return result;
 }

@@ -31,19 +31,22 @@ class Generator {
   void push(const uint32_t &type, const std::string &reg);
   void pop(const uint32_t &type, const std::string &reg);
 
+  std::string assembly_filename;
   std::vector<stackVariable> stackVar;
   Bytecode *bytecode;
-  uint32_t stackSize = -1; // sababta aan -1 u iri waa, in ay isku mid noqdaan
-                           // array currentType[index] kiisa iyo stackSize
+  uint32_t stackSize = -1; // The reason I say -1 is that the currentType[index]
+                           // array should be the same as the stackSize
+
   std::vector<uint32_t> currentType;
 
   std::stringstream assembly_main;
   std::stringstream assembly_text;
   std::stringstream assembly_data;
+
   std::vector<uint32_t> opcode;
 
 public:
-  Generator();
+  Generator(std::string filename);
   void free();
   InterpretResult main(Bytecode &pBytecode);
 };

@@ -9,6 +9,7 @@ void Debug::disassemble(const std::string name) {
     offset = disassembleInstruction(offset);
   }
   bytecode.free();
+  std::cout << "== " << name << " ==" << std::endl;
 }
 
 int Debug::disassembleInstruction(int offset) {

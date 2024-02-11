@@ -64,5 +64,10 @@ Sessionx.vim
 
 # assembly
 *.asm
+
+# temp
+*.tmp
+
+# program
 lang
 app

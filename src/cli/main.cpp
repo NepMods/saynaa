@@ -16,9 +16,13 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  Generator gen;
+  Generator gen("nasm.asm");
   gen.main(bytecode);
   gen.free();
   bytecode.free();
+
+  std::puts(""); // new line
+  if (std::system("nasm -f elf64 nasm.asm && ld nasm.o -o app"))
+    return 1;
   return 0;
 }
