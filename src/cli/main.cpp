@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ * src/cli/main:
+ *   main compiler
+ */
+
 #include "../generator/generator.h"
 #include "../shared/common.h"
 
@@ -16,13 +24,13 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
 
-  Generator gen("nasm.asm");
+  Generator gen("saynaa.asm");
   gen.main(bytecode);
   gen.free();
   bytecode.free();
 
   std::puts(""); // new line
-  if (std::system("nasm -f elf64 nasm.asm && ld nasm.o -o app"))
+  if (std::system("nasm -f elf64 saynaa.asm && ld saynaa.o -o app"))
     return 1;
   return 0;
 }

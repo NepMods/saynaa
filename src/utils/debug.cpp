@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ */
+
 #include "debug.h"
 
 Debug::Debug(Bytecode value) : bytecode(value) {}
@@ -39,6 +45,8 @@ int Debug::disassembleInstruction(int offset) {
     return constantInstruction("OP_DEFINE_LOCAL", false, offset);
   case OP_EQUAL:
     return simpleInstruction("OP_EQUAL", offset);
+  case OP_NEQU:
+    return simpleInstruction("OP_NEQU", offset);
   case OP_GREATER:
     return simpleInstruction("OP_GREATER", offset);
   case OP_LESS:

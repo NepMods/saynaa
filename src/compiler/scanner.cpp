@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ */
+
 #include "scanner.h"
 
 void Scanner::put(const std::string &source) {

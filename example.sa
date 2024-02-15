@@ -1,7 +1,7 @@
 let str = "result: ";
 let x = 10;
 let y = 20;
-let z = x*y;
+let z = ((x*y)==(!20))+80;
 
 print(str);
 print(z);

@@ -1,6 +1,6 @@
 
 ## PROGRAM NAME
-NAME = lang
+NAME = saynaa
 
 ## MODE can be DEBUG or RELEASE
 MODE = DEBUG

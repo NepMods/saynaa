@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ */
+
 #ifndef lang_generator_h
 #define lang_generator_h
 
@@ -13,33 +19,35 @@ typedef enum {
 
 class Generator {
   enum {
-    V_ADD,
-    V_SUB,
-    V_MUL,
-    V_DIV,
-    V_NOTHING,
-  };
-  enum {
-    Type_String = 1,
-    Type_Integer,
-    Type_Unknown,
+    ADD_METHOD,
+    SUB_METHOD,
+    MUL_METHOD,
+    DIV_METHOD,
+
+    EQU_METHOD,
+    NEQ_METHOD,
+    UNK_METHOD,
   };
 
   InterpretResult run();
   void runtimeError(const std::string error);
   auto checkVariable(std::string name);
-  void push(const uint32_t &type, const std::string &reg);
-  void pop(const uint32_t &type, const std::string &reg);
+  void BinaryOP(u_int32_t type);
+
+  void store_Variable(const std::string &type, const std::string &val);
+  void store_ptrAllVariable(int location);
+  int total_allVariable = 0;
+
+  void store_tmpValue();
+  void get_tmpValue(const std::string &reg);
+  int total_tmpValue = 0;
 
   std::string assembly_filename;
   std::vector<stackVariable> stackVar;
   Bytecode *bytecode;
-  uint32_t stackSize = -1; // The reason I say -1 is that the currentType[index]
-                           // array should be the same as the stackSize
-
-  std::vector<uint32_t> currentType;
 
   std::stringstream assembly_main;
+  std::stringstream assembly_mainend;
   std::stringstream assembly_text;
   std::stringstream assembly_data;
 

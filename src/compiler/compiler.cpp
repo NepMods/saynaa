@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ * src/compiler/compiler.cpp
+ *   contains parser
+ */
+
 #include "compiler.h"
 
 Parser::Parser(const std::string &source) {
@@ -123,7 +131,7 @@ void Parser::binary() {
 
   switch (operatorType) {
   case TK_NOTEQ:
-    emitBytes(OP_EQUAL, OP_NOT);
+    emitByte(OP_NEQU);
     break;
   case TK_EQEQ:
     emitByte(OP_EQUAL);

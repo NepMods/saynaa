@@ -1,12 +1,37 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ * src/genrator/generator.cpp:
+ *   Contains final x86_64 Nasm code generator from phase opcode
+ */
+
 #include "generator.h"
 
 Generator::Generator(std::string filename) : assembly_filename(filename) {
 
   assembly_data << "section .data\n";
-  assembly_text << "section .text\n";
-  assembly_text << "global _start\n";
+  assembly_data << "    allVariable: dq 0\n";
+  assembly_data << "    tmpValue: dq 0\n";
+  assembly_data << "\n";
+  assembly_data << "    TYPE_STR: equ 10\n";
+  assembly_data << "    TYPE_INT: equ 20\n";
 
-  assembly_text << "\nallocate:; allocate(size)\n";
+  assembly_text << "section .text\n";
+  assembly_text << "global _start\n\n";
+
+  assembly_text << "\%macro allocateSpace 1\n";
+  assembly_text << "    push \%1\n";
+  assembly_text << "    call allocate\n";
+  assembly_text << "\%endmacro\n";
+  assembly_text << "\n";
+  assembly_text << "\%macro freeSpace 2\n";
+  assembly_text << "    push \%2\n";
+  assembly_text << "    push \%1\n";
+  assembly_text << "    call free\n";
+  assembly_text << "\%endmacro\n\n";
+
+  assembly_text << "allocate:; allocate(size)\n";
   assembly_text << "    push rbp\n";
   assembly_text << "    mov rbp, rsp\n";
   assembly_text << "    mov rax, 9\n";
@@ -23,9 +48,9 @@ Generator::Generator(std::string filename) : assembly_filename(filename) {
   assembly_text << "    mov rbx, qword[rsp]\n";
   assembly_text << "    add rsp, 16\n";
   assembly_text << "    push rbx\n";
-  assembly_text << "    ret\n";
+  assembly_text << "    ret\n\n";
 
-  assembly_text << "\nfree:; free(address, size)\n";
+  assembly_text << "free:; free(address, size)\n";
   assembly_text << "    push rbp\n";
   assembly_text << "    mov rbp, rsp\n";
   assembly_text << "    mov rax, 11\n";
@@ -38,50 +63,64 @@ Generator::Generator(std::string filename) : assembly_filename(filename) {
   assembly_text << "    mov rbx, qword[rsp]\n";
   assembly_text << "    add rsp, 24\n";
   assembly_text << "    push rbx\n";
-  assembly_text << "    ret\n";
+  assembly_text << "    ret\n\n";
 
-  assembly_text << "\nprint_int:\n";
-  assembly_text << "    mov    eax, edi\n";
-  assembly_text << "    mov    ecx, 0xa\n";
-  assembly_text << "    push   rcx\n";
-  assembly_text << "    mov    rsi, rsp\n";
-  assembly_text << "    sub    rsp, 16\n";
-  assembly_text << "    .toascii_digit:\n";
-  assembly_text << "        xor    edx, edx\n";
-  assembly_text << "        div    ecx\n";
-  assembly_text << "        add    edx, '0'\n";
-  assembly_text << "        dec    rsi\n";
-  assembly_text << "        mov    [rsi], dl\n";
-  assembly_text << "        test   eax, eax\n";
-  assembly_text << "        jnz    .toascii_digit\n";
-  assembly_text << "    mov    eax, 1\n";
-  assembly_text << "    mov    edi, 1\n";
-  assembly_text << "    lea    edx, [rsp+16 + 1]\n";
-  assembly_text << "    sub    edx, esi\n";
-  assembly_text << "    syscall\n";
-  assembly_text << "    add    rsp, 24\n";
-  assembly_text << "    ret\n";
+  assembly_main << "print:\n";
+  assembly_main << "    push rbp\n";
+  assembly_main << "    mov rbp, rsp\n";
+  assembly_main << "    mov bl, byte[rdi]\n";
+  assembly_main << "    mov rdi, qword[rdi+1]\n";
+  assembly_main << "    cmp bl, TYPE_STR\n";
+  assembly_main << "    jne .print_int\n";
+  assembly_main << "    .print_str:\n";
+  assembly_main << "        mov rax, rdi\n";
+  assembly_main << "        mov rbx, 0\n";
+  assembly_main << "        .print_str_count:\n";
+  assembly_main << "            inc rax\n";
+  assembly_main << "            inc rbx\n";
+  assembly_main << "            mov cl, [rax]\n";
+  assembly_main << "            cmp cl, 0\n";
+  assembly_main << "            jne .print_str_count\n";
+  assembly_main << "        mov rax, 1\n";
+  assembly_main << "        mov rsi, rdi\n";
+  assembly_main << "        mov rdi, 1\n";
+  assembly_main << "        mov rdx, rbx\n";
+  assembly_main << "        syscall\n";
+  assembly_main << "        jmp .end_print\n";
+  assembly_main << "    .print_int:\n";
+  assembly_main << "        mov r15, rdi\n";
+  assembly_main << "        allocateSpace 16\n";
+  assembly_main << "        mov rbx, rax\n";
+  assembly_main << "        mov ecx, 0xa\n";
+  assembly_main << "        add rax, 16\n";
+  assembly_main << "        mov rsi, rax\n";
+  assembly_main << "        mov byte[rsi], cl\n";
+  assembly_main << "        mov rax, r15\n";
+  assembly_main << "        .toascii_digit:\n";
+  assembly_main << "            xor edx, edx\n";
+  assembly_main << "            div ecx\n";
+  assembly_main << "            add edx, '0'\n";
+  assembly_main << "            dec rsi\n";
+  assembly_main << "            mov byte[rsi], dl\n";
+  assembly_main << "            test eax, eax\n";
+  assembly_main << "            jnz .toascii_digit\n";
+  assembly_main << "        mov rax, 1\n";
+  assembly_main << "        mov rdi, 1\n";
+  assembly_main << "        lea rdx, [rbx+16+1]\n";
+  assembly_main << "        sub rdx, rsi\n";
+  assembly_main << "        syscall\n";
+  assembly_main << "        freeSpace rbx, 16\n";
+  assembly_main << "    .end_print:\n";
+  assembly_main << "    pop rbp\n";
+  assembly_main << "    ret\n\n";
 
-  assembly_text << "\nprint_str:\n";
-  assembly_text << "    push rbp\n";
-  assembly_text << "    mov rbp, rsp\n";
-  assembly_text << "    mov rax, qword[rbp+16]\n";
-  assembly_text << "    mov rbx, 0\n";
-  assembly_text << "    .print_loop:\n";
-  assembly_text << "        inc rax\n";
-  assembly_text << "        inc rbx\n";
-  assembly_text << "        mov cl, [rax]\n";
-  assembly_text << "        cmp cl, 0\n";
-  assembly_text << "        jne .print_loop\n";
-  assembly_text << "    mov rax, 1\n";
-  assembly_text << "    mov rdi, 1\n";
-  assembly_text << "    mov rsi, qword[rbp+16]\n";
-  assembly_text << "    mov rdx, rbx\n";
-  assembly_text << "    syscall\n";
-  assembly_text << "    pop rbp\n";
-  assembly_text << "    ret\n";
+  assembly_main << "main:\n";
+  assembly_main << "    push rbp\n";
+  assembly_main << "    mov rbp, rsp\n";
+  assembly_main << "    ; natural code\n";
 
-  assembly_main << "\n_start:\n";
+  assembly_mainend << "    pop rbp\n";
+  assembly_mainend << "    ret\n";
 }
 
 void Generator::free() {
@@ -99,130 +138,184 @@ void Generator::runtimeError(const std::string error) {
   exit(1);
 }
 
-void Generator::push(const uint32_t &type, const std::string &reg) {
-  assembly_main << "    push " << reg << "\n";
-  currentType.push_back(type);
-  stackSize++;
+void Generator::BinaryOP(u_int32_t type) {
+  assembly_main << "    ; begin BinaryOP\n";
+
+  get_tmpValue("rbx");
+  get_tmpValue("rax");
+
+  do {
+    if (type == ADD_METHOD) {
+      assembly_main << "    add rax, rbx\n";
+      assembly_main << "    mov r15, rax\n";
+    } else if (type == SUB_METHOD) {
+      assembly_main << "    sub rax, rbx\n";
+      assembly_main << "    mov r15, rax\n";
+    } else if (type == MUL_METHOD) {
+      assembly_main << "    mul rbx\n";
+      assembly_main << "    mov r15, rax\n";
+    } else if (type == DIV_METHOD) {
+      assembly_main << "    mov rcx, rax\n";
+      assembly_main << "    mov rax, rbx\n";
+      assembly_main << "    div rcx\n";
+      assembly_main << "    mov r15, rax\n";
+    }
+
+    if (type == EQU_METHOD) {
+      assembly_main << "    cmp rax, rbx\n";
+      assembly_main << "    sete al\n";
+      assembly_main << "    movzx eax, al\n";
+      assembly_main << "    mov r15, rax\n";
+    } else if (type == NEQ_METHOD) {
+      assembly_main << "    cmp rax, rbx\n";
+      assembly_main << "    setne al\n";
+      assembly_main << "    movzx eax, al\n";
+      assembly_main << "    mov r15, rax\n";
+    }
+
+    store_Variable("TYPE_INT", "r15");
+    store_tmpValue();
+    assembly_main << "    ; End BinaryOP\n";
+  } while (false);
 }
 
-void Generator::pop(const uint32_t &type, const std::string &reg) {
-  assembly_main << "    pop " << reg << "\n";
-  currentType.pop_back();
-  stackSize--;
+void Generator::store_Variable(const std::string &type,
+                               const std::string &val) {
+  assembly_main << "    allocateSpace 9\n";
+  assembly_main << "    mov byte[rax], " << type << "\n";
+  assembly_main << "    mov qword[rax+1], " << val << "\n";
+}
+
+void Generator::store_ptrAllVariable(int location) {
+  assembly_main << "    mov rbx, qword[allVariable]\n";
+  assembly_main << "    mov qword[rbx+" << location << "], rax\n";
+  assembly_main << "    mov rax, rbx\n";
+}
+
+void Generator::store_tmpValue() {
+  assembly_main << "    mov rbx, qword[tmpValue]\n";
+  assembly_main << "    mov qword[rbx+" << (total_tmpValue++) * 8 << "], rax\n";
+  assembly_main << "    mov rax, rbx\n";
+}
+
+void Generator::get_tmpValue(const std::string &reg) {
+  assembly_main << "    mov " << reg << ", qword[tmpValue]\n";
+  assembly_main << "    mov " << reg << ", qword[" << reg << "+"
+                << (--total_tmpValue) * 8 << "]\n";
+  assembly_main << "    mov " << reg << ", qword[" << reg << "+1]\n";
 }
 
 InterpretResult Generator::run() {
-#define BINARY_OP(valueType, op, type)                                         \
-  do {                                                                         \
-    if (type == V_ADD) {                                                       \
-      pop(Type_Integer, "rax");                                                \
-      pop(Type_Integer, "rbx");                                                \
-      assembly_main << "    add rax, rbx\n";                                   \
-    } else if (type == V_SUB) {                                                \
-      pop(Type_Integer, "rbx");                                                \
-      pop(Type_Integer, "rax");                                                \
-      assembly_main << "    sub rax, rbx\n";                                   \
-    } else if (type == V_MUL) {                                                \
-      pop(Type_Integer, "rax");                                                \
-      pop(Type_Integer, "rbx");                                                \
-      assembly_main << "    mul rbx\n";                                        \
-    } else if (type == V_DIV) {                                                \
-      pop(Type_Integer, "rbx");                                                \
-      pop(Type_Integer, "rax");                                                \
-      assembly_main << "    div rbx\n";                                        \
-    }                                                                          \
-    push(Type_Integer, "rax");                                                 \
-  } while (false)
 
   for (int i = 0; i != opcode.size(); i++) {
     switch (opcode[i]) {
     case OP_CONSTANT: {
       auto bcode = bytecode->value[opcode[++i]];
-
-      // this code below doing: if bcode stored int {...}, else if stored string
-      // {...}
-      if (std::holds_alternative<int>(bcode)) {
-        int output = std::get<int>(bcode);
-        assembly_main << "    mov rax, " << std::to_string(output) << "\n";
-        push(Type_Integer, "rax");
-      } else if (std::holds_alternative<std::string>(bcode)) {
-        std::string output = std::get<std::string>(bcode);
-        std::string rondomText = generateRandomText(7);
-        assembly_data << "    " << rondomText << " dw " << output << ",0\n";
-        push(Type_String, rondomText);
+      if (opcode[i + 1] == OP_POP) {
+        i++;
+        continue;
       }
+
+      assembly_main << "    ; tmpValue\n";
+
+      if (std::holds_alternative<int>(bcode)) {
+        int value = std::get<int>(bcode);
+        store_Variable("TYPE_INT", std::to_string(value));
+      } else if (std::holds_alternative<std::string>(bcode)) {
+        std::string value = std::get<std::string>(bcode);
+        std::string rondomText = generateRandomText(7);
+        assembly_data << "    " << rondomText << ": dw " << value << ",0\n";
+
+        assembly_main << "    lea r15, [" << rondomText << "]\n";
+        store_Variable("TYPE_STR", "r15");
+      }
+      store_tmpValue();
+      assembly_main << "    ; tmpValue\n";
       break;
     }
+    case OP_NOT:
+      get_tmpValue("rax");
+      assembly_main << "    test rax, rax\n";
+      assembly_main << "    sete al\n";
+      assembly_main << "    movzx eax, al\n";
+      assembly_main << "    mov r15, rax\n";
+      store_Variable("TYPE_INT", "r15");
+      store_tmpValue();
+      break;
     case OP_NULL:
+      store_Variable("TYPE_INT", std::to_string(0));
+      store_tmpValue();
       break;
     case OP_TRUE:
+      store_Variable("TYPE_INT", std::to_string(1));
+      store_tmpValue();
       break;
     case OP_FALSE:
+      store_Variable("TYPE_INT", std::to_string(0));
+      store_tmpValue();
       break;
     case OP_POP:
-      pop(Type_Unknown, "rax");
+      --total_tmpValue;
       break;
     case OP_GET_LOCAL: {
       std::string name = bytecode->name[opcode[++i]];
       auto iter = checkVariable(name);
       if (iter == stackVar.end()) {
-        runtimeError("variable not defined!"); // error is: var 10 = 29;
+        runtimeError("variable not defined!");
       }
-      std::stringstream offset;
-      uint32_t location = stackSize - iter->stackLocation;
-      offset << "qword [rsp + " << location * 8 << "]";
-      push(currentType[stackSize - location], offset.str());
+      assembly_main << "    ; getLocal\n";
+      assembly_main << "    mov rax, qword[allVariable]\n";
+      assembly_main << "    mov rbx, qword[rax+" << iter->variableLocation * 8
+                    << "]\n";
+      assembly_main << "    mov rax, rbx\n";
+      store_tmpValue();
+      assembly_main << "    ; getLocal\n";
       break;
     }
     case OP_DEFINE_LOCAL: {
       std::string name = bytecode->name[opcode[++i]];
-      if (stackVar.end() != checkVariable(name))
-        runtimeError("variable before defined!");
-      stackVar.push_back({name, stackSize});
+      auto iter = checkVariable(name);
+      assembly_main << "    ; defineLocal\n";
+      assembly_main << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                    << "]\n";
+      if (iter != stackVar.end()) {
+        store_ptrAllVariable((iter->variableLocation) * 8);
+      } else {
+        stackVar.push_back({name, total_allVariable});
+        store_ptrAllVariable((total_allVariable++) * 8);
+      }
+      assembly_main << "    ; defineLocal\n";
       break;
     }
-    case OP_EQUAL: {
-      break;
-    }
-    case OP_GREATER:
-      BINARY_OP(BOOL_VAL, >, V_NOTHING);
-      break;
-    case OP_LESS:
-      BINARY_OP(BOOL_VAL, <, V_NOTHING);
-      break;
     case OP_ADD:
-      BINARY_OP(NUMBER_VAL, +, V_ADD);
+      BinaryOP(ADD_METHOD);
       break;
     case OP_SUBTRACT:
-      BINARY_OP(NUMBER_VAL, -, V_SUB);
+      BinaryOP(SUB_METHOD);
       break;
     case OP_MULTIPLY:
-      BINARY_OP(NUMBER_VAL, *, V_MUL);
+      BinaryOP(MUL_METHOD);
       break;
     case OP_DIVIDE:
-      BINARY_OP(NUMBER_VAL, /, V_DIV);
+      BinaryOP(DIV_METHOD);
       break;
-    case OP_NOT:
+    case OP_EQUAL:
+      BinaryOP(EQU_METHOD);
       break;
-    case OP_NEGATE:
+    case OP_NEQU:
+      BinaryOP(NEQ_METHOD);
       break;
     case OP_PRINT: {
-      if (currentType[stackSize] == Type_Integer) {
-        pop(Type_Integer, "rdi");
-        assembly_main << "    call print_int\n";
-      } else if (currentType[stackSize] == Type_String) {
-        assembly_main << "    call print_str\n";
-      }
+      assembly_main << "    ; print\n";
+      assembly_main << "    mov rdi, qword[rax+" << (--total_tmpValue) * 8
+                    << "]\n";
+      assembly_main << "    call print\n";
+      assembly_main << "    ; print\n";
       break;
-    }
-    case OP_RETURN: {
-      return INTERPRET_OK;
     }
     }
   }
-
-#undef BINARY_OP
-  return INTERPRET_RUNTIME_ERROR;
+  return INTERPRET_OK;
 }
 
 InterpretResult Generator::main(Bytecode &pBytecode) {
@@ -231,14 +324,25 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
 
   InterpretResult result = run();
 
-  assembly_main << "    mov rax, 60\n";
-  assembly_main << "    xor rdi, rdi\n";
-  assembly_main << "    syscall\n";
+  std::stringstream assembly_start;
+  assembly_start << "\n_start:\n";
+  assembly_start << "    allocateSpace 80\n";
+  assembly_start << "    mov qword[allVariable], rax\n";
+  assembly_start << "    allocateSpace 32\n";
+  assembly_start << "    mov qword[tmpValue], rax\n";
+  assembly_start << "    ; call main function\n";
+  assembly_start << "    call main\n";
+  assembly_start << "    ; exit\n";
+  assembly_start << "    mov rax, 60\n";
+  assembly_start << "    xor rdi, rdi\n";
+  assembly_start << "    syscall\n";
 
   std::ofstream outputFile(assembly_filename);
   outputFile << assembly_data.str();
   outputFile << assembly_text.str();
   outputFile << assembly_main.str();
+  outputFile << assembly_mainend.str();
+  outputFile << assembly_start.str();
   outputFile.close();
 
   return result;

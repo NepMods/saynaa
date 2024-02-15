@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ */
+
 #ifndef lang_common_h
 #define lang_common_h
 

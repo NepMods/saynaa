@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
+ * Distributed Under The MIT License
+ *
+ */
+
 #ifndef lang_public_h
 #define lang_public_h
 
@@ -12,6 +18,7 @@ typedef enum {
   OP_DEFINE_LOCAL,
   OP_GET_LOCAL,
   OP_EQUAL,
+  OP_NEQU,
   OP_GREATER,
   OP_LESS,
   OP_ADD,
@@ -50,8 +57,8 @@ typedef struct {
 } Variable;
 
 typedef struct {
-  std::string name;       // variable name
-  uint32_t stackLocation; // stack location in assembly
+  std::string name;     // variable name
+  int variableLocation; // variable location in assembly
 } stackVariable;
 
 #endif
