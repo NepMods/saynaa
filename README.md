@@ -20,9 +20,10 @@ i am used clang-format inside vscode
 
 ## Variable is a dynamic?
 
-I made an assembly variable named allVariable which I saved in the address of the array that holds all the global variables, while each variable consists of 9 bytes.
+I made an assembly variable named `allVariable` which I saved in the address of the array that holds all the global variables,
+while each variable consists of **9 bytes**.
 First byte: This is the variable's type
-The other 8 bytes: if the variable is an integer, it holds the value of the variable, if it is a string, it holds the string of its address, while the string I saved in the 'section .data'
+The other 8 bytes: if the variable is an integer, it holds the value of the variable, if it is a string, it holds the string of its address, while the string I saved in the `section .data`
 
 ## build
 
