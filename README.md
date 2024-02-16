@@ -18,12 +18,15 @@ print(z);
 
 i am used clang-format inside vscode
 
-## Variable is a dynamic?
+## how the variable is converted into assembly?
 
-I made an assembly variable named `allVariable` which I saved in the address of the array that holds all the global variables,
-while each variable consists of **9 bytes**.
-First byte: This is the variable's type
-The other 8 bytes: if the variable is an integer, it holds the value of the variable, if it is a string, it holds the string of its address, while the string I saved in the `section .data`
+I have created an assembly variable named `allVariable`, which I have stored at the address of an array holding all the global variables. Each variable within this array consists of **9 bytes**:
+
+- The first byte denotes the variable's type.
+- The remaining 8 bytes store the variable's value. For integer variables, this space holds the value itself. For string variables, it contains the address of the string, which is stored in the section .data.
+
+and also created another variable called `tmpValue`, which temporarily stores the address of variable
+like when I want to use binary expression, and etc
 
 ## build
 
