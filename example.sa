@@ -3,5 +3,6 @@ let x = 10;
 let y = 20;
 let z = ((x*y)==(!20))+80;
 
+print("\a\t"); // bell and tab
 print(str);
 print(z);

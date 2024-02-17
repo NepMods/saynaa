@@ -39,10 +39,10 @@ int Debug::disassembleInstruction(int offset) {
     return simpleInstruction("OP_FALSE", offset);
   case OP_POP:
     return simpleInstruction("OP_POP", offset);
-  case OP_GET_LOCAL:
-    return constantInstruction("OP_GET_LOCAL", false, offset);
-  case OP_DEFINE_LOCAL:
-    return constantInstruction("OP_DEFINE_LOCAL", false, offset);
+  case OP_GET_GLOBAL:
+    return constantInstruction("OP_GET_GLOBAL", false, offset);
+  case OP_DEFINE_GLOBAL:
+    return constantInstruction("OP_DEFINE_GLOBAL", false, offset);
   case OP_EQUAL:
     return simpleInstruction("OP_EQUAL", offset);
   case OP_NEQU:

@@ -27,9 +27,37 @@ std::string readFile(const char *path) {
   return source;
 }
 
+std::vector<int> stringToDecimal(const std::string &input) {
+  std::vector<int> decimalValues;
+  for (size_t i = 0; i < input.size(); ++i) {
+    if (input[i] == '\\' && i + 1 < input.size()) {
+      switch (input[++i]) {
+      case 'n':
+        decimalValues.push_back(10);
+        break;
+      case 'r':
+        decimalValues.push_back(13);
+        break;
+      case 't':
+        decimalValues.push_back(9);
+        break;
+      case 'a':
+        decimalValues.push_back(7);
+        break;
+      default:
+        decimalValues.push_back(static_cast<int>(input[i]));
+        break;
+      }
+    } else {
+      decimalValues.push_back(static_cast<int>(input[i]));
+    }
+  }
+  return decimalValues;
+}
+
 std::string generateRandomText(int length) {
   std::string characters =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> dis(0, characters.size() - 1);

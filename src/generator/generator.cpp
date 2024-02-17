@@ -217,16 +217,23 @@ InterpretResult Generator::run() {
       }
 
       assembly_main << "    ; tmpValue\n";
-
       if (std::holds_alternative<int>(bcode)) {
         int value = std::get<int>(bcode);
         store_Variable("TYPE_INT", std::to_string(value));
       } else if (std::holds_alternative<std::string>(bcode)) {
         std::string value = std::get<std::string>(bcode);
         std::string rondomText = generateRandomText(7);
-        assembly_data << "    " << rondomText << ": dw " << value << ",0\n";
 
-        assembly_main << "    lea r15, [" << rondomText << "]\n";
+        std::vector<int> decimalValues = stringToDecimal(value);
+        std::stringstream output;
+        for (int dval : decimalValues) {
+          output << "0" << std::hex << dval << "H, ";
+        }
+        output << "00H\n";
+        // example: ?_rondom: db 48, ..., 00
+        assembly_data << "    ?_" << rondomText << ": db " << output.str();
+
+        assembly_main << "    lea r15, [?_" << rondomText << "]\n";
         store_Variable("TYPE_STR", "r15");
       }
       store_tmpValue();
@@ -257,7 +264,7 @@ InterpretResult Generator::run() {
     case OP_POP:
       --total_tmpValue;
       break;
-    case OP_GET_LOCAL: {
+    case OP_GET_GLOBAL: {
       std::string name = bytecode->name[opcode[++i]];
       auto iter = checkVariable(name);
       if (iter == stackVar.end()) {
@@ -272,7 +279,7 @@ InterpretResult Generator::run() {
       assembly_main << "    ; getLocal\n";
       break;
     }
-    case OP_DEFINE_LOCAL: {
+    case OP_DEFINE_GLOBAL: {
       std::string name = bytecode->name[opcode[++i]];
       auto iter = checkVariable(name);
       assembly_main << "    ; defineLocal\n";

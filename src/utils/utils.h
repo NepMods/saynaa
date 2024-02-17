@@ -11,6 +11,7 @@
 
 std::string copyString(const char *chars, int length);
 std::string readFile(const char *path);
+std::vector<int> stringToDecimal(const std::string &input);
 std::string generateRandomText(int length);
 
 #endif

@@ -120,8 +120,8 @@ uint32_t Parser::parseVariable(const char *errorMessage) {
   return identifierConstant(&previous);
 }
 
-void Parser::defineVariable(uint32_t local) {
-  emitBytes(OP_DEFINE_LOCAL, local);
+void Parser::defineVariable(uint32_t global) {
+  emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
 void Parser::binary() {
@@ -192,12 +192,19 @@ void Parser::number() {
 }
 
 void Parser::string() {
-  emitConstant(copyString(previous.start, previous.length));
+  emitConstant(copyString(previous.start + 1, previous.length - 2));
 }
 
 void Parser::namedVariable(Token name) {
   uint32_t arg = identifierConstant(&name);
-  emitBytes(OP_GET_LOCAL, arg);
+  emitBytes(OP_GET_GLOBAL, arg);
+
+  // if (match(TK_EQ)) {
+  //   expression();
+  //   emitBytes(OP_SET_GLOBAL, arg);
+  // } else {
+  //   emitBytes(OP_GET_GLOBAL, arg);
+  // }
 }
 
 void Parser::variable() { namedVariable(previous); }
