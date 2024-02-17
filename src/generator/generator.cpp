@@ -155,9 +155,8 @@ void Generator::BinaryOP(u_int32_t type) {
       assembly_main << "    mul rbx\n";
       assembly_main << "    mov r15, rax\n";
     } else if (type == DIV_METHOD) {
-      assembly_main << "    mov rcx, rax\n";
-      assembly_main << "    mov rax, rbx\n";
-      assembly_main << "    div rcx\n";
+      assembly_main << "    xor rdx, rdx\n";
+      assembly_main << "    div rbx\n";
       assembly_main << "    mov r15, rax\n";
     }
 

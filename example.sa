@@ -1,7 +1,7 @@
 let str = "result: ";
 let x = 10;
 let y = 20;
-let z = ((x*y)==(!20))+80;
+let z = ((x*y)==(!20))+80/2;
 
 print("\a\t"); // bell and tab
 print(str);
