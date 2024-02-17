@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef lang_utils_h
-#define lang_utils_h
+#ifndef saynaa_utils_h
+#define saynaa_utils_h
 
 #include "../shared/common.h"
 

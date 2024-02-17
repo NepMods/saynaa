@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef lang_compiler_h
-#define lang_compiler_h
+#ifndef saynaa_compiler_h
+#define saynaa_compiler_h
 
 #include "scanner.h"
 

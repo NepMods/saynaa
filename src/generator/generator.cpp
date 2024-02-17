@@ -205,11 +205,13 @@ void Generator::get_tmpValue(const std::string &reg) {
   assembly_main << "    mov " << reg << ", qword[" << reg << "+1]\n";
 }
 
+// generate x86_64 nasm assembly
 InterpretResult Generator::run() {
 
   for (int i = 0; i != opcode.size(); i++) {
     switch (opcode[i]) {
     case OP_CONSTANT: {
+      // OP_CONSTANT: is value holder
       auto bcode = bytecode->value[opcode[++i]];
       if (opcode[i + 1] == OP_POP) {
         i++;
@@ -229,7 +231,7 @@ InterpretResult Generator::run() {
         for (int dval : decimalValues) {
           output << "0" << std::hex << dval << "H, ";
         }
-        output << "00H\n";
+        output << "00H ; '" << value << "'\n";
         // example: ?_rondom: db 48, ..., 00
         assembly_data << "    ?_" << rondomText << ": db " << output.str();
 
@@ -333,6 +335,7 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
 
   std::stringstream assembly_start;
   assembly_start << "\n_start:\n";
+  // allocate 80 bytes to store 10 variable's address
   assembly_start << "    allocateSpace 80\n";
   assembly_start << "    mov qword[allVariable], rax\n";
   assembly_start << "    allocateSpace 32\n";

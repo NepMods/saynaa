@@ -2,6 +2,8 @@
  * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
  * Distributed Under The MIT License
  *
+ * src/utils/debug.cpp
+ *   print us each opcode, value and the line number
  */
 
 #include "debug.h"

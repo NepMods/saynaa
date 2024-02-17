@@ -2,10 +2,12 @@
  * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
  * Distributed Under The MIT License
  *
+ * src/shared/value.h
+ *   contains: bytecode and stack variable
  */
 
-#ifndef lang_public_h
-#define lang_public_h
+#ifndef saynaa_public_h
+#define saynaa_public_h
 
 #include "common.h"
 
@@ -32,9 +34,9 @@ typedef enum {
 } OpCode;
 
 typedef struct {
-  std::vector<std::string> name;
-  std::vector<std::variant<int, std::string>> value;
-  std::vector<int> lines;
+  std::vector<std::string> name;                     // variable name
+  std::vector<std::variant<int, std::string>> value; // value can be str, int
+  std::vector<int> lines;                            // line number of opcode
   std::vector<uint32_t> opcode;
 
   void free() {
@@ -44,17 +46,6 @@ typedef struct {
     opcode.clear();
   }
 } Bytecode;
-
-typedef struct {
-  std::vector<std::string> name;
-  std::vector<std::variant<int, std::string>> value;
-  std::vector<int> stackLocation;
-
-  void free() {
-    name.clear();
-    value.clear();
-  }
-} Variable;
 
 typedef struct {
   std::string name;     // variable name

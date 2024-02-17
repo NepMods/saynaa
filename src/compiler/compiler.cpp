@@ -199,6 +199,7 @@ void Parser::namedVariable(Token name) {
   uint32_t arg = identifierConstant(&name);
   emitBytes(OP_GET_GLOBAL, arg);
 
+  // TODO:
   // if (match(TK_EQ)) {
   //   expression();
   //   emitBytes(OP_SET_GLOBAL, arg);

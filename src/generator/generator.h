@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef lang_generator_h
-#define lang_generator_h
+#ifndef saynaa_generator_h
+#define saynaa_generator_h
 
 #include "../compiler/compiler.h"
 #include "../shared/common.h"

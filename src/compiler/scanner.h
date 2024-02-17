@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef lang_scanner_h
-#define lang_scanner_h
+#ifndef saynaa_scanner_h
+#define saynaa_scanner_h
 
 #include "../shared/common.h"
 

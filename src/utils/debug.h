@@ -4,8 +4,8 @@
  *
  */
 
-#ifndef lang_debug_h
-#define lang_debug_h
+#ifndef saynaa_debug_h
+#define saynaa_debug_h
 
 #include "../shared/common.h"
 #include "../shared/value.h"

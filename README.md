@@ -1,6 +1,8 @@
-# myCompiler
+<p align="center"> <img src="docs/assets/icon.png" alt="Saynaa-Language" title="Saynaa Programming Language" align="center"> </p>
 
-Welcome to myCompiler - written in c++ language, from scratch
+# Saynaa Compiler Language
+
+Welcome to saynaa - written in c++ language, from scratch
 
 ## code look like this
 

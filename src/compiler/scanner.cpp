@@ -2,6 +2,8 @@
  * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
  * Distributed Under The MIT License
  *
+ * src/compiler/scanner.cpp
+ *   converting source code into token
  */
 
 #include "scanner.h"

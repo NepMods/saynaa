@@ -2,10 +2,12 @@
  * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
  * Distributed Under The MIT License
  *
+ * src/shared/commom.h
+ *   contains headers file
  */
 
-#ifndef lang_common_h
-#define lang_common_h
+#ifndef saynaa_common_h
+#define saynaa_common_h
 
 #include <cstdarg>
 #include <fstream>
