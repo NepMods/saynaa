@@ -7,6 +7,7 @@
  */
 
 #include "compiler.h"
+#include <cstdio>
 
 Parser::Parser(const std::string &source) {
   scanner.put(source);
@@ -75,7 +76,7 @@ void Parser::emitBytes(uint32_t byte1, uint32_t byte2) {
 }
 
 void Parser::emitReturn() {
-  // emitByte(OP_NULL);
+  emitByte(OP_NULL);
   emitByte(OP_RETURN);
 }
 
@@ -102,7 +103,9 @@ void Parser::emitConstant(std::string value) {
 }
 
 void Parser::endCompiler() {
-  emitReturn();
+  if(bytecode->opcode[bytecode->opcode.size()-2] != OP_RETURN) {
+    emitReturn();
+  }
 #ifdef DEBUG_PRINT_CODE
   if (!hadError) {
     Debug debug(*bytecode);
@@ -295,7 +298,7 @@ Parser::ParseRule Parser::getRule(TokenType type) {
       [TK_NULL] = {&Parser::literal, nullptr, PREC_NONE},
       [TK_OR] = {nullptr, nullptr, PREC_NONE},
       [TK_PRINT] = {nullptr, nullptr, PREC_NONE},
-      [TK_RETURN] = {nullptr, nullptr, PREC_NONE},
+      [TK_RETURN] = {&Parser::parseReturn, nullptr, PREC_NONE},
       [TK_TRUE] = {&Parser::literal, nullptr, PREC_NONE},
       [TK_LET] = {nullptr, nullptr, PREC_NONE},
       [TK_WHILE] = {nullptr, nullptr, PREC_NONE},
@@ -326,6 +329,15 @@ void Parser::blockBody() {
   }
 
   consume(TK_RBRACE, "Expect '}' after block.");
+}
+
+void Parser::parseReturn() {
+  if (check(TK_SCOLON)) {
+    emitByte(OP_NULL);
+  } else {
+    expression();
+  }
+  emitByte(OP_RETURN);
 }
 
 void Parser::functionDeclaration() {

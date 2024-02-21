@@ -12,28 +12,28 @@
 #include "common.h"
 
 typedef enum {
-  OP_CONSTANT,
-  OP_NULL,
-  OP_TRUE,
-  OP_FALSE,
-  OP_POP,
-  OP_DEFINE_GLOBAL,
-  OP_GET_GLOBAL,
-  OP_EQUAL,
-  OP_NEQU,
-  OP_GREATER,
-  OP_LESS,
-  OP_ADD,
-  OP_SUBTRACT,
-  OP_MULTIPLY,
-  OP_DIVIDE,
-  OP_NOT,
-  OP_NEGATE,
-  OP_BEG_FUNC,
-  OP_END_FUNC,
-  OP_CALL,
-  OP_PRINT,
-  OP_RETURN,
+  OP_CONSTANT, //0
+  OP_NULL, //1
+  OP_TRUE, //2
+  OP_FALSE, //3
+  OP_POP, //4
+  OP_DEFINE_GLOBAL, //5
+  OP_GET_GLOBAL, //6
+  OP_EQUAL, //7
+  OP_NEQU, //8
+  OP_GREATER, //9
+  OP_LESS, //10
+  OP_ADD, //11
+  OP_SUBTRACT, //12
+  OP_MULTIPLY, //13
+  OP_DIVIDE, //14
+  OP_NOT, //15
+  OP_NEGATE, //16
+  OP_BEG_FUNC, //17
+  OP_END_FUNC, //18
+  OP_CALL,  //19
+  OP_PRINT, //20
+  OP_RETURN, //21
 } OpCode;
 
 typedef struct {

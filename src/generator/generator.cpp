@@ -8,6 +8,8 @@
 
 #include "generator.h"
 #include "macros.h"
+#include <cstdio>
+#include <sstream>
 
 Generator::Generator(std::string filename) : assembly_filename(filename) {
 
@@ -206,15 +208,25 @@ void Generator::store_tmpValue() {
   *assembly_body << "    mov rax, rbx\n";
 }
 
-void Generator::get_tmpValue(const std::string &reg) {
-  *assembly_body << "    mov " << reg << ", qword[tmpValue]\n";
-  *assembly_body << "    mov " << reg << ", qword[" << reg << "+"
-                 << (--total_tmpValue) * 8 << "]\n";
-  *assembly_body << "    mov " << reg << ", qword[" << reg << "+1]\n";
+void Generator::get_tmpValue(const std::string &reg, std::stringstream *ss, int *temp_value) {
+  if(ss == nullptr) {
+    ss = assembly_body;
+  }
+  int local_total_tmpValue = 2;
+  if(temp_value == nullptr) {
+    local_total_tmpValue = total_tmpValue;
+  }
+  *ss << "    mov " << reg << ", qword[tmpValue]\n";
+  *ss << "    mov " << reg << ", qword[" << reg << "+"
+                 << (--local_total_tmpValue) * 8 << "]\n";
+  *ss << "    mov " << reg << ", qword[" << reg << "+1]\n";
 }
 
 // generate x86_64 nasm assembly
 InterpretResult Generator::run() {
+  for (int i = 0; i!= opcode.size(); i++) {
+    printf("Value = %d\n", opcode[i]);
+  }
 
   for (int i = 0; i != opcode.size(); i++) {
     switch (opcode[i]) {
@@ -353,7 +365,9 @@ InterpretResult Generator::run() {
       break;
     }
     case OP_RETURN: {
-      return INTERPRET_OK;
+      *assembly_body << "\n    ; return \n";
+      *assembly_body << end_label;
+      push_label();
       break;
     }
     }
@@ -378,8 +392,10 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   assembly_start << "    ; call main function\n";
   assembly_start << "    call main\n";
   assembly_start << "    ; exit\n";
+  assembly_start << "    mov rax, qword[rax+0]\n";
+  assembly_start << "    mov rbx, qword[rax+1]\n";
+  assembly_start << "    mov rdi, rbx\n";
   assembly_start << "    mov rax, 60\n";
-  assembly_start << "    xor rdi, rdi\n";
   assembly_start << "    syscall\n";
 
   std::ofstream outputFile(assembly_filename);
@@ -388,7 +404,6 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
     outputFile << assembly_label[i];
   }
   outputFile << assembly_main.str();
-  outputFile << end_label;
   outputFile << assembly_start.str();
   outputFile.close();
 

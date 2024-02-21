@@ -1,6 +1,7 @@
 function test() {
-  let str = "Hello World!\n";
-  print(str);
+  let k = "value Inside function \n";
+  print(k);
+  return "return value of function \n";
 }
-
-test();
+print(test());
+return 99;

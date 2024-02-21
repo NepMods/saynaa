@@ -73,6 +73,7 @@ class Parser {
   void expression();
   void varDeclaration();
   void blockBody();
+  void parseReturn();
   void functionDeclaration();
   void function();
   void expressionStatement();

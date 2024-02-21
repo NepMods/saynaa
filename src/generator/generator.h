@@ -43,7 +43,7 @@ class Generator {
   int total_allVariable = 0;
 
   void store_tmpValue();
-  void get_tmpValue(const std::string &reg);
+  void get_tmpValue(const std::string &reg, std::stringstream *ss = nullptr, int *temp_value = nullptr);
   int total_tmpValue = 0;
 
   std::string assembly_filename;
