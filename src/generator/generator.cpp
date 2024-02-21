@@ -224,10 +224,6 @@ void Generator::get_tmpValue(const std::string &reg, std::stringstream *ss, int 
 
 // generate x86_64 nasm assembly
 InterpretResult Generator::run() {
-  for (int i = 0; i!= opcode.size(); i++) {
-    printf("Value = %d\n", opcode[i]);
-  }
-
   for (int i = 0; i != opcode.size(); i++) {
     switch (opcode[i]) {
     case OP_CONSTANT: {
