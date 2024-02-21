@@ -11,50 +11,50 @@
 
 typedef enum {
   // Single-character tokens.
-  TK_LPARAN,
-  TK_RPARAN,
-  TK_LBRACE,
-  TK_RBRACE,
-  TK_COMMA,
-  TK_DOT,
-  TK_MINUS,
-  TK_PLUS,
-  TK_SCOLON,
-  TK_SLASH,
-  TK_STAR,
+  TK_LPARAN, // (
+  TK_RPARAN, // )
+  TK_LBRACE, // {
+  TK_RBRACE, // }
+  TK_COMMA,  // ,
+  TK_DOT,    // .
+  TK_MINUS,  // -
+  TK_PLUS,   // +
+  TK_SCOLON, // ;
+  TK_SLASH,  // /
+  TK_STAR,   // *
 
   // One or two character tokens.
-  TK_NOT,
-  TK_NOTEQ,
-  TK_EQ,
-  TK_EQEQ,
-  TK_GT,
-  TK_GTEQ,
-  TK_LT,
-  TK_LTEQ,
+  TK_NOT,   // !
+  TK_NOTEQ, // !=
+  TK_EQ,    // =
+  TK_EQEQ,  // ==
+  TK_GT,    // <
+  TK_GTEQ,  // <=
+  TK_LT,    // >
+  TK_LTEQ,  // >=
 
   // Literals.
-  TK_NAME,
-  TK_STRING,
-  TK_NUMBER,
+  TK_NAME,   // NAME
+  TK_STRING, // ""
+  TK_NUMBER, // 0-9
 
   // Keywords.
-  TK_AND,
-  TK_ELSE,
-  TK_FALSE,
-  TK_FOR,
-  TK_FUNCTION,
-  TK_IF,
-  TK_NULL,
-  TK_OR,
-  TK_PRINT,
-  TK_RETURN,
-  TK_TRUE,
-  TK_LET,
-  TK_WHILE,
+  TK_AND,      // and
+  TK_ELSE,     // else
+  TK_FALSE,    // false
+  TK_FOR,      // for
+  TK_FUNCTION, // function
+  TK_IF,       // if
+  TK_NULL,     // null
+  TK_OR,       // or
+  TK_PRINT,    // print
+  TK_RETURN,   // return
+  TK_TRUE,     // true
+  TK_LET,      // let
+  TK_WHILE,    // while
 
-  TK_ERROR,
-  TK_EOF
+  TK_ERROR, //
+  TK_EOF    // \0
 } TokenType;
 
 typedef struct {

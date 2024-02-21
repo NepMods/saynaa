@@ -1,8 +1,6 @@
-let str = "result: ";
-let x = 10;
-let y = 20;
-let z = ((x*y)==(!20))+80/2;
+function test() {
+  let str = "Hello World!\n";
+  print(str);
+}
 
-print("\a\t"); // bell and tab
-print(str);
-print(z);
+test();

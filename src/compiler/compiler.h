@@ -60,6 +60,7 @@ class Parser {
   uint32_t parseVariable(const char *errorMessage);
   void defineVariable(uint32_t global);
   void binary();
+  void call();
   void literal();
   void grouping();
   void number();
@@ -71,6 +72,9 @@ class Parser {
   ParseRule getRule(TokenType type);
   void expression();
   void varDeclaration();
+  void blockBody();
+  void functionDeclaration();
+  void function();
   void expressionStatement();
   void printStatement();
   void declaration();

@@ -74,7 +74,10 @@ void Parser::emitBytes(uint32_t byte1, uint32_t byte2) {
   emitByte(byte2);
 }
 
-void Parser::emitReturn() { emitByte(OP_RETURN); }
+void Parser::emitReturn() {
+  // emitByte(OP_NULL);
+  emitByte(OP_RETURN);
+}
 
 uint32_t Parser::makeConstant(int value) {
   bytecode->value.push_back(value);
@@ -165,6 +168,18 @@ void Parser::binary() {
   }
 }
 
+void Parser::call() {
+  uint32_t argCount = 0;
+  if (!check(TK_RPARAN)) {
+    do {
+      expression();
+      argCount++;
+    } while (match(TK_COMMA));
+  }
+  consume(TK_RPARAN, "Expect ')' after arguments.");
+  emitBytes(OP_CALL, argCount);
+}
+
 void Parser::literal() {
   switch (previous.type) {
   case TK_FALSE:
@@ -249,7 +264,7 @@ void Parser::parsePrecedence(Precedence precedence) {
 Parser::ParseRule Parser::getRule(TokenType type) {
   // Prefix             Infix              Infix Precedence
   ParseRule rules[TK_EOF + 1] = {
-      [TK_LPARAN] = {&Parser::grouping, nullptr, PREC_NONE},
+      [TK_LPARAN] = {&Parser::grouping, &Parser::call, PREC_CALL},
       [TK_RPARAN] = {nullptr, nullptr, PREC_NONE},
       [TK_LBRACE] = {nullptr, nullptr, PREC_NONE},
       [TK_RBRACE] = {nullptr, nullptr, PREC_NONE},
@@ -305,6 +320,29 @@ void Parser::varDeclaration() {
   defineVariable(global);
 }
 
+void Parser::blockBody() {
+  while (!check(TK_RBRACE) && !check(TK_EOF)) {
+    declaration();
+  }
+
+  consume(TK_RBRACE, "Expect '}' after block.");
+}
+
+void Parser::functionDeclaration() {
+  uint32_t global = parseVariable("Expect function name.");
+  emitBytes(OP_BEG_FUNC, global);
+  function();
+  emitByte(OP_END_FUNC);
+}
+
+void Parser::function() {
+  consume(TK_LPARAN, "Expect '(' after function name.");
+  consume(TK_RPARAN, "Expect ')' after parameter.");
+  consume(TK_LBRACE, "Expect '{' before function body.");
+  blockBody();
+  emitByte(OP_NULL);
+}
+
 void Parser::expressionStatement() {
   expression();
   consume(TK_SCOLON, "Expect ';' after expression.");
@@ -320,6 +358,8 @@ void Parser::printStatement() {
 void Parser::declaration() {
   if (match(TK_LET)) {
     varDeclaration();
+  } else if (match(TK_FUNCTION)) {
+    functionDeclaration();
   } else {
     statement();
   }
