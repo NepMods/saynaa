@@ -16,6 +16,21 @@ print(str);
 print(z);
 ```
 
+## Functions
+
+```
+let OK = 0;
+let ERROR = 1;
+
+function TestFunction() {
+    return 8;
+}
+
+print(TestFunction());
+return OK;
+
+```
+
 ## Code Format
 
 i am used clang-format inside vscode
