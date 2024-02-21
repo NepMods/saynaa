@@ -388,7 +388,7 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   assembly_start << "    ; call main function\n";
   assembly_start << "    call main\n";
   assembly_start << "    ; exit\n";
-  assembly_start << "    mov rax, qword[rax+0]\n";
+  assembly_start << "    mov rax, qword[rax+"<< total_tmpValue * 8 <<"]\n";
   assembly_start << "    mov rbx, qword[rax+1]\n";
   assembly_start << "    mov rdi, rbx\n";
   assembly_start << "    mov rax, 60\n";
