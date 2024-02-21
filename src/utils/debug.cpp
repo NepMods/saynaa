@@ -32,7 +32,7 @@ int Debug::disassembleInstruction(int offset) {
   uint32_t instruction = bytecode.opcode[offset];
   switch (instruction) {
   case OP_CONSTANT:
-    return constantInstruction("OP_CONSTANT", true, offset);
+    return constantInstructionValue("OP_CONSTANT", offset);
   case OP_NULL:
     return simpleInstruction("OP_NULL", offset);
   case OP_TRUE:
@@ -42,9 +42,9 @@ int Debug::disassembleInstruction(int offset) {
   case OP_POP:
     return simpleInstruction("OP_POP", offset);
   case OP_GET_GLOBAL:
-    return constantInstruction("OP_GET_GLOBAL", false, offset);
+    return constantInstructionName("OP_GET_GLOBAL", offset);
   case OP_DEFINE_GLOBAL:
-    return constantInstruction("OP_DEFINE_GLOBAL", false, offset);
+    return constantInstructionName("OP_DEFINE_GLOBAL", offset);
   case OP_EQUAL:
     return simpleInstruction("OP_EQUAL", offset);
   case OP_NEQU:
@@ -67,6 +67,12 @@ int Debug::disassembleInstruction(int offset) {
     return simpleInstruction("OP_NEGATE", offset);
   case OP_PRINT:
     return simpleInstruction("OP_PRINT", offset);
+  case OP_BEG_FUNC:
+    return constantInstructionName("OP_BEG_FUNC", offset);
+  case OP_END_FUNC:
+    return simpleInstruction("OP_END_FUNC", offset);
+  case OP_CALL:
+    return callInstruction("OP_CALL", offset);
   case OP_RETURN:
     return simpleInstruction("OP_RETURN", offset);
   default:
@@ -80,25 +86,36 @@ int Debug::simpleInstruction(const std::string name, int offset) {
   return offset + 1;
 }
 
-int Debug::constantInstruction(const std::string name, bool isNumber,
-                               int offset) {
+int Debug::callInstruction(const std::string name, int offset) {
+  uint32_t val = bytecode.opcode[offset + 1];
+  std::cout << std::left << std::setw(16) << name << std::setw(4) << val
+            << std::endl;
+  return offset + 2;
+}
+
+int Debug::constantInstructionValue(const std::string name, int offset) {
   uint32_t val = bytecode.opcode[offset + 1];
   std::cout << std::left << std::setw(16) << name << std::setw(4) << val << "'";
 
-  if (isNumber) {
-
-    // this code below doing: if value stored int (print int), else if stored
-    // string (print string)
-    if (std::holds_alternative<int>(bytecode.value[val])) {
-      int output = std::get<int>(bytecode.value[val]);
-      std::cout << output;
-    } else if (std::holds_alternative<std::string>(bytecode.value[val])) {
-      std::string output = std::get<std::string>(bytecode.value[val]);
-      std::cout << output;
-    }
-  } else {
-    std::cout << bytecode.name[val];
+  // this code below doing: if value stored int (print int), else if stored
+  // string (print string)
+  if (std::holds_alternative<int>(bytecode.value[val])) {
+    int output = std::get<int>(bytecode.value[val]);
+    std::cout << output;
+  } else if (std::holds_alternative<std::string>(bytecode.value[val])) {
+    std::string output = std::get<std::string>(bytecode.value[val]);
+    std::cout << output;
   }
+
+  std::cout << "'" << std::endl;
+  return offset + 2;
+}
+
+int Debug::constantInstructionName(const std::string name, int offset) {
+  uint32_t val = bytecode.opcode[offset + 1];
+  std::cout << std::left << std::setw(16) << name << std::setw(4) << val << "'";
+
+  std::cout << bytecode.name[val];
 
   std::cout << "'" << std::endl;
   return offset + 2;

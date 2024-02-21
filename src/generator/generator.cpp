@@ -7,6 +7,7 @@
  */
 
 #include "generator.h"
+#include "macros.h"
 
 Generator::Generator(std::string filename) : assembly_filename(filename) {
 
@@ -17,110 +18,110 @@ Generator::Generator(std::string filename) : assembly_filename(filename) {
   assembly_data << "    TYPE_STR: equ 10\n";
   assembly_data << "    TYPE_INT: equ 20\n";
 
-  assembly_text << "section .text\n";
-  assembly_text << "global _start\n\n";
+  current_label << "section .text\n";
+  current_label << "global _start\n\n";
+  push_label();
 
-  assembly_text << "\%macro allocateSpace 1\n";
-  assembly_text << "    push \%1\n";
-  assembly_text << "    call allocate\n";
-  assembly_text << "\%endmacro\n";
-  assembly_text << "\n";
-  assembly_text << "\%macro freeSpace 2\n";
-  assembly_text << "    push \%2\n";
-  assembly_text << "    push \%1\n";
-  assembly_text << "    call free\n";
-  assembly_text << "\%endmacro\n\n";
+  current_label << "\%macro allocateSpace 1\n";
+  current_label << "    push \%1\n";
+  current_label << "    call allocate\n";
+  current_label << "\%endmacro\n";
+  current_label << "\n";
+  current_label << "\%macro freeSpace 2\n";
+  current_label << "    push \%2\n";
+  current_label << "    push \%1\n";
+  current_label << "    call free\n";
+  current_label << "\%endmacro\n\n";
+  push_label();
 
-  assembly_text << "allocate:; allocate(size)\n";
-  assembly_text << "    push rbp\n";
-  assembly_text << "    mov rbp, rsp\n";
-  assembly_text << "    mov rax, 9\n";
-  assembly_text << "    xor rdi, rdi\n";
-  assembly_text << "    mov rsi, qword[rbp+16]\n";
-  assembly_text << "    mov rdx, 3\n";
-  assembly_text << "    mov r10, 0x22\n";
-  assembly_text << "    xor r8, r8\n";
-  assembly_text << "    xor r9, r9\n";
-  assembly_text << "    syscall\n";
-  assembly_text << "    pop rbp\n";
-  assembly_text << "    \n";
-  assembly_text << "    ; remove stack parameter\n";
-  assembly_text << "    mov rbx, qword[rsp]\n";
-  assembly_text << "    add rsp, 16\n";
-  assembly_text << "    push rbx\n";
-  assembly_text << "    ret\n\n";
+  current_label << "allocate:; allocate(size)\n";
+  current_label << "    push rbp\n";
+  current_label << "    mov rbp, rsp\n";
+  current_label << "    mov rax, 9\n";
+  current_label << "    xor rdi, rdi\n";
+  current_label << "    mov rsi, qword[rbp+16]\n";
+  current_label << "    mov rdx, 3\n";
+  current_label << "    mov r10, 0x22\n";
+  current_label << "    xor r8, r8\n";
+  current_label << "    xor r9, r9\n";
+  current_label << "    syscall\n";
+  current_label << "    pop rbp\n";
+  current_label << "    \n";
+  current_label << "    ; remove stack parameter\n";
+  current_label << "    mov rbx, qword[rsp]\n";
+  current_label << "    add rsp, 16\n";
+  current_label << "    push rbx\n";
+  current_label << "    ret\n\n";
+  push_label();
 
-  assembly_text << "free:; free(address, size)\n";
-  assembly_text << "    push rbp\n";
-  assembly_text << "    mov rbp, rsp\n";
-  assembly_text << "    mov rax, 11\n";
-  assembly_text << "    mov rdi, qword[rbp+16] ; address\n";
-  assembly_text << "    mov rsi, qword[rbp+24] ; size\n";
-  assembly_text << "    syscall\n";
-  assembly_text << "    pop rbp\n";
-  assembly_text << "    \n";
-  assembly_text << "    ; remove stack parameter\n";
-  assembly_text << "    mov rbx, qword[rsp]\n";
-  assembly_text << "    add rsp, 24\n";
-  assembly_text << "    push rbx\n";
-  assembly_text << "    ret\n\n";
+  current_label << "free:; free(address, size)\n";
+  current_label << "    push rbp\n";
+  current_label << "    mov rbp, rsp\n";
+  current_label << "    mov rax, 11\n";
+  current_label << "    mov rdi, qword[rbp+16] ; address\n";
+  current_label << "    mov rsi, qword[rbp+24] ; size\n";
+  current_label << "    syscall\n";
+  current_label << "    pop rbp\n";
+  current_label << "    \n";
+  current_label << "    ; remove stack parameter\n";
+  current_label << "    mov rbx, qword[rsp]\n";
+  current_label << "    add rsp, 24\n";
+  current_label << "    push rbx\n";
+  current_label << "    ret\n\n";
+  push_label();
 
-  assembly_main << "print:\n";
-  assembly_main << "    push rbp\n";
-  assembly_main << "    mov rbp, rsp\n";
-  assembly_main << "    mov bl, byte[rdi]\n";
-  assembly_main << "    mov rdi, qword[rdi+1]\n";
-  assembly_main << "    cmp bl, TYPE_STR\n";
-  assembly_main << "    jne .print_int\n";
-  assembly_main << "    .print_str:\n";
-  assembly_main << "        mov rax, rdi\n";
-  assembly_main << "        mov rbx, 0\n";
-  assembly_main << "        .print_str_count:\n";
-  assembly_main << "            inc rax\n";
-  assembly_main << "            inc rbx\n";
-  assembly_main << "            mov cl, [rax]\n";
-  assembly_main << "            cmp cl, 0\n";
-  assembly_main << "            jne .print_str_count\n";
-  assembly_main << "        mov rax, 1\n";
-  assembly_main << "        mov rsi, rdi\n";
-  assembly_main << "        mov rdi, 1\n";
-  assembly_main << "        mov rdx, rbx\n";
-  assembly_main << "        syscall\n";
-  assembly_main << "        jmp .end_print\n";
-  assembly_main << "    .print_int:\n";
-  assembly_main << "        mov r15, rdi\n";
-  assembly_main << "        allocateSpace 16\n";
-  assembly_main << "        mov rbx, rax\n";
-  assembly_main << "        mov ecx, 0xa\n";
-  assembly_main << "        add rax, 16\n";
-  assembly_main << "        mov rsi, rax\n";
-  assembly_main << "        mov byte[rsi], cl\n";
-  assembly_main << "        mov rax, r15\n";
-  assembly_main << "        .toascii_digit:\n";
-  assembly_main << "            xor edx, edx\n";
-  assembly_main << "            div ecx\n";
-  assembly_main << "            add edx, '0'\n";
-  assembly_main << "            dec rsi\n";
-  assembly_main << "            mov byte[rsi], dl\n";
-  assembly_main << "            test eax, eax\n";
-  assembly_main << "            jnz .toascii_digit\n";
-  assembly_main << "        mov rax, 1\n";
-  assembly_main << "        mov rdi, 1\n";
-  assembly_main << "        lea rdx, [rbx+16+1]\n";
-  assembly_main << "        sub rdx, rsi\n";
-  assembly_main << "        syscall\n";
-  assembly_main << "        freeSpace rbx, 16\n";
-  assembly_main << "    .end_print:\n";
-  assembly_main << "    pop rbp\n";
-  assembly_main << "    ret\n\n";
+  current_label << "print:\n";
+  current_label << "    push rbp\n";
+  current_label << "    mov rbp, rsp\n";
+  current_label << "    mov bl, byte[rdi]\n";
+  current_label << "    mov rdi, qword[rdi+1]\n";
+  current_label << "    cmp bl, TYPE_STR\n";
+  current_label << "    jne .print_int\n";
+  current_label << "    .print_str:\n";
+  current_label << "        mov rax, rdi\n";
+  current_label << "        mov rbx, 0\n";
+  current_label << "        .print_str_count:\n";
+  current_label << "            inc rax\n";
+  current_label << "            inc rbx\n";
+  current_label << "            mov cl, [rax]\n";
+  current_label << "            cmp cl, 0\n";
+  current_label << "            jne .print_str_count\n";
+  current_label << "        mov rax, 1\n";
+  current_label << "        mov rsi, rdi\n";
+  current_label << "        mov rdi, 1\n";
+  current_label << "        mov rdx, rbx\n";
+  current_label << "        syscall\n";
+  current_label << "        jmp .end_print\n";
+  current_label << "    .print_int:\n";
+  current_label << "        mov r15, rdi\n";
+  current_label << "        allocateSpace 16\n";
+  current_label << "        mov rbx, rax\n";
+  current_label << "        mov ecx, 0xa\n";
+  current_label << "        add rax, 16\n";
+  current_label << "        mov rsi, rax\n";
+  current_label << "        mov byte[rsi], cl\n";
+  current_label << "        mov rax, r15\n";
+  current_label << "        .toascii_digit:\n";
+  current_label << "            xor edx, edx\n";
+  current_label << "            div ecx\n";
+  current_label << "            add edx, '0'\n";
+  current_label << "            dec rsi\n";
+  current_label << "            mov byte[rsi], dl\n";
+  current_label << "            test eax, eax\n";
+  current_label << "            jnz .toascii_digit\n";
+  current_label << "        mov rax, 1\n";
+  current_label << "        mov rdi, 1\n";
+  current_label << "        lea rdx, [rbx+16+1]\n";
+  current_label << "        sub rdx, rsi\n";
+  current_label << "        syscall\n";
+  current_label << "        freeSpace rbx, 16\n";
+  current_label << "    .end_print:\n";
+  current_label << "    pop rbp\n";
+  current_label << "    ret\n\n";
+  push_label();
 
   assembly_main << "main:\n";
-  assembly_main << "    push rbp\n";
-  assembly_main << "    mov rbp, rsp\n";
-  assembly_main << "    ; natural code\n";
-
-  assembly_mainend << "    pop rbp\n";
-  assembly_mainend << "    ret\n";
+  assembly_main << beg_label;
 }
 
 void Generator::free() {
@@ -138,70 +139,78 @@ void Generator::runtimeError(const std::string error) {
   exit(1);
 }
 
+// copy current_label value into array assembly_label,
+// and clear current_label
+void Generator::push_label() {
+  assembly_label.push_back(current_label.str());
+  current_label.str(""); // clear
+}
+
 void Generator::BinaryOP(u_int32_t type) {
-  assembly_main << "    ; begin BinaryOP\n";
+  *assembly_body << "    ; begin BinaryOP\n";
 
   get_tmpValue("rbx");
   get_tmpValue("rax");
 
   do {
     if (type == ADD_METHOD) {
-      assembly_main << "    add rax, rbx\n";
-      assembly_main << "    mov r15, rax\n";
+      *assembly_body << "    add rax, rbx\n";
+      *assembly_body << "    mov r15, rax\n";
     } else if (type == SUB_METHOD) {
-      assembly_main << "    sub rax, rbx\n";
-      assembly_main << "    mov r15, rax\n";
+      *assembly_body << "    sub rax, rbx\n";
+      *assembly_body << "    mov r15, rax\n";
     } else if (type == MUL_METHOD) {
-      assembly_main << "    mul rbx\n";
-      assembly_main << "    mov r15, rax\n";
+      *assembly_body << "    mul rbx\n";
+      *assembly_body << "    mov r15, rax\n";
     } else if (type == DIV_METHOD) {
-      assembly_main << "    xor rdx, rdx\n";
-      assembly_main << "    div rbx\n";
-      assembly_main << "    mov r15, rax\n";
+      *assembly_body << "    xor rdx, rdx\n";
+      *assembly_body << "    div rbx\n";
+      *assembly_body << "    mov r15, rax\n";
     }
 
     if (type == EQU_METHOD) {
-      assembly_main << "    cmp rax, rbx\n";
-      assembly_main << "    sete al\n";
-      assembly_main << "    movzx eax, al\n";
-      assembly_main << "    mov r15, rax\n";
+      *assembly_body << "    cmp rax, rbx\n";
+      *assembly_body << "    sete al\n";
+      *assembly_body << "    movzx eax, al\n";
+      *assembly_body << "    mov r15, rax\n";
     } else if (type == NEQ_METHOD) {
-      assembly_main << "    cmp rax, rbx\n";
-      assembly_main << "    setne al\n";
-      assembly_main << "    movzx eax, al\n";
-      assembly_main << "    mov r15, rax\n";
+      *assembly_body << "    cmp rax, rbx\n";
+      *assembly_body << "    setne al\n";
+      *assembly_body << "    movzx eax, al\n";
+      *assembly_body << "    mov r15, rax\n";
     }
 
     store_Variable("TYPE_INT", "r15");
     store_tmpValue();
-    assembly_main << "    ; End BinaryOP\n";
+    *assembly_body << "    ; End BinaryOP\n";
   } while (false);
 }
 
 void Generator::store_Variable(const std::string &type,
                                const std::string &val) {
-  assembly_main << "    allocateSpace 9\n";
-  assembly_main << "    mov byte[rax], " << type << "\n";
-  assembly_main << "    mov qword[rax+1], " << val << "\n";
+  *assembly_body << "    allocateSpace 9\n";
+  *assembly_body << "    mov byte[rax], " << type << "\n";
+  *assembly_body << "    mov qword[rax+1], " << val << "\n";
 }
 
 void Generator::store_ptrAllVariable(int location) {
-  assembly_main << "    mov rbx, qword[allVariable]\n";
-  assembly_main << "    mov qword[rbx+" << location << "], rax\n";
-  assembly_main << "    mov rax, rbx\n";
+  *assembly_body << "    mov rbx, qword[allVariable]\n";
+  *assembly_body << "    mov qword[rbx+" << location << "], rax\n";
+  *assembly_body << "    mov rax, rbx\n";
 }
 
 void Generator::store_tmpValue() {
-  assembly_main << "    mov rbx, qword[tmpValue]\n";
-  assembly_main << "    mov qword[rbx+" << (total_tmpValue++) * 8 << "], rax\n";
-  assembly_main << "    mov rax, rbx\n";
+  *assembly_body << "    mov rbx, qword[tmpValue]\n";
+  *assembly_body << "    mov qword[rbx+" << (total_tmpValue++) * 8
+                 << "], rax\n";
+  *assembly_body << "    mov rax, rbx\n";
 }
 
 void Generator::get_tmpValue(const std::string &reg) {
-  assembly_main << "    mov " << reg << ", qword[tmpValue]\n";
-  assembly_main << "    mov " << reg << ", qword[" << reg << "+"
-                << (--total_tmpValue) * 8 << "]\n";
-  assembly_main << "    mov " << reg << ", qword[" << reg << "+1]\n";
+  *assembly_body << "    mov " << reg << ", qword[tmpValue]\n";
+  *assembly_body << "    mov " << reg << ", qword[" << reg << "+"
+                 << (--total_tmpValue) * 8 << "]\n";
+  *assembly_body << "    mov " << reg << ", qword[" << reg << "+1]\n";
 }
 
 // generate x86_64 nasm assembly
@@ -217,7 +226,7 @@ InterpretResult Generator::run() {
         continue;
       }
 
-      assembly_main << "    ; tmpValue\n";
+      *assembly_body << "    ; tmpValue\n";
       if (std::holds_alternative<int>(bcode)) {
         int value = std::get<int>(bcode);
         store_Variable("TYPE_INT", std::to_string(value));
@@ -234,19 +243,19 @@ InterpretResult Generator::run() {
         // example: ?_rondom: db 48, ..., 00
         assembly_data << "    ?_" << rondomText << ": db " << output.str();
 
-        assembly_main << "    lea r15, [?_" << rondomText << "]\n";
+        *assembly_body << "    lea r15, [?_" << rondomText << "]\n";
         store_Variable("TYPE_STR", "r15");
       }
       store_tmpValue();
-      assembly_main << "    ; tmpValue\n";
+      *assembly_body << "    ; tmpValue\n";
       break;
     }
     case OP_NOT:
       get_tmpValue("rax");
-      assembly_main << "    test rax, rax\n";
-      assembly_main << "    sete al\n";
-      assembly_main << "    movzx eax, al\n";
-      assembly_main << "    mov r15, rax\n";
+      *assembly_body << "    test rax, rax\n";
+      *assembly_body << "    sete al\n";
+      *assembly_body << "    movzx eax, al\n";
+      *assembly_body << "    mov r15, rax\n";
       store_Variable("TYPE_INT", "r15");
       store_tmpValue();
       break;
@@ -267,32 +276,40 @@ InterpretResult Generator::run() {
       break;
     case OP_GET_GLOBAL: {
       std::string name = bytecode->name[opcode[++i]];
+      if (opcode[i + 1] == OP_CALL) {
+        i++; // OP_CALL
+        i++; // How many parameters (now exists 0)
+             // you can see in: opcode[i+1]
+        // TODO: function has parameter
+        *assembly_body << "    call " << name << "\n";
+        continue;
+      }
       auto iter = checkVariable(name);
       if (iter == stackVar.end()) {
         runtimeError("variable not defined!");
       }
-      assembly_main << "    ; getLocal\n";
-      assembly_main << "    mov rax, qword[allVariable]\n";
-      assembly_main << "    mov rbx, qword[rax+" << iter->variableLocation * 8
-                    << "]\n";
-      assembly_main << "    mov rax, rbx\n";
+      *assembly_body << "    ; getLocal\n";
+      *assembly_body << "    mov rax, qword[allVariable]\n";
+      *assembly_body << "    mov rbx, qword[rax+" << iter->variableLocation * 8
+                     << "]\n";
+      *assembly_body << "    mov rax, rbx\n";
       store_tmpValue();
-      assembly_main << "    ; getLocal\n";
+      *assembly_body << "    ; getLocal\n";
       break;
     }
     case OP_DEFINE_GLOBAL: {
       std::string name = bytecode->name[opcode[++i]];
       auto iter = checkVariable(name);
-      assembly_main << "    ; defineLocal\n";
-      assembly_main << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
-                    << "]\n";
+      *assembly_body << "    ; defineLocal\n";
+      *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                     << "]\n";
       if (iter != stackVar.end()) {
         store_ptrAllVariable((iter->variableLocation) * 8);
       } else {
         stackVar.push_back({name, total_allVariable});
         store_ptrAllVariable((total_allVariable++) * 8);
       }
-      assembly_main << "    ; defineLocal\n";
+      *assembly_body << "    ; defineLocal\n";
       break;
     }
     case OP_ADD:
@@ -314,11 +331,29 @@ InterpretResult Generator::run() {
       BinaryOP(NEQ_METHOD);
       break;
     case OP_PRINT: {
-      assembly_main << "    ; print\n";
-      assembly_main << "    mov rdi, qword[rax+" << (--total_tmpValue) * 8
-                    << "]\n";
-      assembly_main << "    call print\n";
-      assembly_main << "    ; print\n";
+      *assembly_body << "    ; print\n";
+      *assembly_body << "    mov rdi, qword[rax+" << (--total_tmpValue) * 8
+                     << "]\n";
+      *assembly_body << "    call print\n";
+      *assembly_body << "    ; print\n";
+      break;
+    }
+    case OP_BEG_FUNC: {
+      assembly_body = &current_label;
+
+      std::string label_name = bytecode->name[opcode[++i]];
+      *assembly_body << label_name << ":\n";
+      *assembly_body << beg_label;
+      break;
+    }
+    case OP_END_FUNC: {
+      *assembly_body << end_label;
+      push_label();
+      assembly_body = &assembly_main;
+      break;
+    }
+    case OP_RETURN: {
+      return INTERPRET_OK;
       break;
     }
     }
@@ -330,6 +365,7 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   bytecode = &pBytecode;
   opcode = bytecode->opcode;
 
+  assembly_body = &assembly_main;
   InterpretResult result = run();
 
   std::stringstream assembly_start;
@@ -348,9 +384,11 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
 
   std::ofstream outputFile(assembly_filename);
   outputFile << assembly_data.str();
-  outputFile << assembly_text.str();
+  for (int i = 0; i != assembly_label.size(); i++) {
+    outputFile << assembly_label[i];
+  }
   outputFile << assembly_main.str();
-  outputFile << assembly_mainend.str();
+  outputFile << end_label;
   outputFile << assembly_start.str();
   outputFile.close();
 

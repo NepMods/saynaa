@@ -13,7 +13,9 @@
 class Debug {
   int disassembleInstruction(int offset);
   int simpleInstruction(const std::string name, int offset);
-  int constantInstruction(const std::string name, bool isNumber, int offset);
+  int callInstruction(const std::string name, int offset);
+  int constantInstructionName(const std::string name, int offset);
+  int constantInstructionValue(const std::string name, int offset);
 
 public:
   Debug(Bytecode value);

@@ -33,16 +33,16 @@ std::vector<int> stringToDecimal(const std::string &input) {
     if (input[i] == '\\' && i + 1 < input.size()) {
       switch (input[++i]) {
       case 'n':
-        decimalValues.push_back(10);
+        decimalValues.push_back(char('\n'));
         break;
       case 'r':
-        decimalValues.push_back(13);
+        decimalValues.push_back(char('\r'));
         break;
       case 't':
-        decimalValues.push_back(9);
+        decimalValues.push_back(char('\t'));
         break;
       case 'a':
-        decimalValues.push_back(7);
+        decimalValues.push_back(char('\a'));
         break;
       default:
         decimalValues.push_back(static_cast<int>(input[i]));
