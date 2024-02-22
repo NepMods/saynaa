@@ -103,7 +103,7 @@ void Parser::emitConstant(std::string value) {
 }
 
 void Parser::endCompiler() {
-  if(bytecode->opcode[bytecode->opcode.size()-2] != OP_RETURN) {
+  if (bytecode->opcode[bytecode->opcode.size() - 2] != OP_RETURN) {
     emitReturn();
   }
 #ifdef DEBUG_PRINT_CODE
@@ -215,15 +215,12 @@ void Parser::string() {
 
 void Parser::namedVariable(Token name) {
   uint32_t arg = identifierConstant(&name);
-  emitBytes(OP_GET_GLOBAL, arg);
-
-  // TODO:
-  // if (match(TK_EQ)) {
-  //   expression();
-  //   emitBytes(OP_SET_GLOBAL, arg);
-  // } else {
-  //   emitBytes(OP_GET_GLOBAL, arg);
-  // }
+  if (match(TK_EQ)) {
+    expression();
+    emitBytes(OP_SET_GLOBAL, arg);
+  } else {
+    emitBytes(OP_GET_GLOBAL, arg);
+  }
 }
 
 void Parser::variable() { namedVariable(previous); }

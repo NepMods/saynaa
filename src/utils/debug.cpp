@@ -41,6 +41,8 @@ int Debug::disassembleInstruction(int offset) {
     return simpleInstruction("OP_FALSE", offset);
   case OP_POP:
     return simpleInstruction("OP_POP", offset);
+  case OP_SET_GLOBAL:
+    return constantInstructionName("OP_SET_GLOBAL", offset);
   case OP_GET_GLOBAL:
     return constantInstructionName("OP_GET_GLOBAL", offset);
   case OP_DEFINE_GLOBAL:
@@ -88,14 +90,14 @@ int Debug::simpleInstruction(const std::string name, int offset) {
 
 int Debug::callInstruction(const std::string name, int offset) {
   uint32_t val = bytecode.opcode[offset + 1];
-  std::cout << std::left << std::setw(16) << name << std::setw(4) << val
+  std::cout << std::left << std::setw(18) << name << std::setw(4) << val
             << std::endl;
   return offset + 2;
 }
 
 int Debug::constantInstructionValue(const std::string name, int offset) {
   uint32_t val = bytecode.opcode[offset + 1];
-  std::cout << std::left << std::setw(16) << name << std::setw(4) << val << "'";
+  std::cout << std::left << std::setw(18) << name << std::setw(4) << val << "'";
 
   // this code below doing: if value stored int (print int), else if stored
   // string (print string)
@@ -113,7 +115,7 @@ int Debug::constantInstructionValue(const std::string name, int offset) {
 
 int Debug::constantInstructionName(const std::string name, int offset) {
   uint32_t val = bytecode.opcode[offset + 1];
-  std::cout << std::left << std::setw(16) << name << std::setw(4) << val << "'";
+  std::cout << std::left << std::setw(18) << name << std::setw(4) << val << "'";
 
   std::cout << bytecode.name[val];
 

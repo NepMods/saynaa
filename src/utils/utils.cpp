@@ -55,6 +55,23 @@ std::vector<int> stringToDecimal(const std::string &input) {
   return decimalValues;
 }
 
+// convert string into hex decimal
+std::string stringToHexDecimal(const std::string &value) {
+  std::vector<int> decimalValues = stringToDecimal(value);
+  std::stringstream output;
+  for (int dval : decimalValues) {
+    if (dval <= 16) {
+      // 0-9, A, B, C, D, F
+      output << "0x0" << std::uppercase << std::hex << dval << ", ";
+    } else {
+      output << "0x" << std::uppercase << std::hex << dval << ", ";
+    }
+  }
+  output << "0x00 ; '" << value << "'\n";
+
+  return output.str();
+}
+
 std::string generateRandomText(int length) {
   std::string characters =
       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";

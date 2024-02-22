@@ -208,17 +208,18 @@ void Generator::store_tmpValue() {
   *assembly_body << "    mov rax, rbx\n";
 }
 
-void Generator::get_tmpValue(const std::string &reg, std::stringstream *ss, int *temp_value) {
-  if(ss == nullptr) {
+void Generator::get_tmpValue(const std::string &reg, std::stringstream *ss,
+                             int *temp_value) {
+  if (ss == nullptr) {
     ss = assembly_body;
   }
   int local_total_tmpValue = 2;
-  if(temp_value == nullptr) {
+  if (temp_value == nullptr) {
     local_total_tmpValue = total_tmpValue;
   }
   *ss << "    mov " << reg << ", qword[tmpValue]\n";
   *ss << "    mov " << reg << ", qword[" << reg << "+"
-                 << (--local_total_tmpValue) * 8 << "]\n";
+      << (--local_total_tmpValue) * 8 << "]\n";
   *ss << "    mov " << reg << ", qword[" << reg << "+1]\n";
 }
 
@@ -242,14 +243,9 @@ InterpretResult Generator::run() {
         std::string value = std::get<std::string>(bcode);
         std::string rondomText = generateRandomText(7);
 
-        std::vector<int> decimalValues = stringToDecimal(value);
-        std::stringstream output;
-        for (int dval : decimalValues) {
-          output << "0" << std::hex << dval << "H, ";
-        }
-        output << "00H ; '" << value << "'\n";
-        // example: ?_rondom: db 48, ..., 00
-        assembly_data << "    ?_" << rondomText << ": db " << output.str();
+        // example: ?_rondom: db 0x48, ..., 0x00
+        assembly_data << "    ?_" << rondomText << ": db "
+                      << stringToHexDecimal(value);
 
         *assembly_body << "    lea r15, [?_" << rondomText << "]\n";
         store_Variable("TYPE_STR", "r15");
@@ -282,6 +278,21 @@ InterpretResult Generator::run() {
     case OP_POP:
       --total_tmpValue;
       break;
+    case OP_SET_GLOBAL: {
+      std::string name = bytecode->name[opcode[++i]];
+      auto iter = checkVariable(name);
+      *assembly_body << "    ; setLocal\n";
+      *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                     << "]\n";
+      if (iter == stackVar.end()) {
+        // not found: variable not defined before
+        runtimeError("variable not defined!");
+      }
+
+      store_ptrAllVariable((iter->variableLocation) * 8);
+      *assembly_body << "    ; setLocal\n";
+      break;
+    }
     case OP_GET_GLOBAL: {
       std::string name = bytecode->name[opcode[++i]];
       if (opcode[i + 1] == OP_CALL) {
@@ -388,7 +399,7 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   assembly_start << "    ; call main function\n";
   assembly_start << "    call main\n";
   assembly_start << "    ; exit\n";
-  assembly_start << "    mov rax, qword[rax+"<< total_tmpValue * 8 <<"]\n";
+  assembly_start << "    mov rax, qword[rax+" << total_tmpValue * 8 << "]\n";
   assembly_start << "    mov rbx, qword[rax+1]\n";
   assembly_start << "    mov rdi, rbx\n";
   assembly_start << "    mov rax, 60\n";

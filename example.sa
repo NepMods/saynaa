@@ -1,5 +1,6 @@
 function test() {
-  let k = "value Inside function \n";
+  let k = "Hello World!";
+  k = "value Inside function \n";
   print(k);
   return "return value of function \n";
 }
