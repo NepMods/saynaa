@@ -1,8 +1,15 @@
+let Global_var = "global Variable! \n";
 function test() {
-  let k = "Hello World!";
-  k = "value Inside function \n";
-  print(k);
-  return "return value of function \n";
+
+  function jj() {
+    print(1);
+  }
+  let local_var = "Local Vadhfdghriable! \n";
+  jj();
+  print(local_var);
+  return 8;
 }
-print(test());
-return 99;
+
+test();
+print(Global_var);
+return 90;

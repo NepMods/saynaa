@@ -17,9 +17,9 @@ typedef enum {
   OP_TRUE,
   OP_FALSE,
   OP_POP,
-  OP_DEFINE_GLOBAL,
-  OP_SET_GLOBAL,
-  OP_GET_GLOBAL,
+  OP_DEFINE_LOCAL ,
+  OP_SET_LOCAL,
+  OP_GET_LOCAL,
   OP_EQUAL,
   OP_NEQU,
   OP_GREATER,
@@ -35,6 +35,7 @@ typedef enum {
   OP_CALL,
   OP_PRINT,
   OP_RETURN,
+  OP_NONE,
 } OpCode;
 
 typedef struct {
@@ -44,16 +45,12 @@ typedef struct {
   std::vector<uint32_t> opcode;
 
   void free() {
-    name.clear();
-    value.clear();
-    lines.clear();
-    opcode.clear();
   }
 } Bytecode;
 
 typedef struct {
   std::string name;     // variable name
-  int variableLocation; // variable location in assembly
+  int variableLocation = 0; // variable location in assembly
 } stackVariable;
 
 #endif
