@@ -30,7 +30,7 @@ int main(int argc, const char *argv[]) {
   bytecode.free();
 
   std::puts(""); // new line
-  if (std::system("nasm -f elf64 saynaa.asm && ld saynaa.o -o app"))
+  if (std::system("nasm -g -f elf64 saynaa.asm && ld saynaa.o -o app"))
     return 1;
   return 0;
 }
