@@ -422,7 +422,6 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         *current_label_stack.back() << label_name << ":\n";
         *current_label_stack.back() << beg_label;
 
-        run(get_op(), this_func, Current_context);
         while(next_op()!= OP_END_FUNC) {
           run(get_op(), current_label_stack.back(), Current_context);
         }
