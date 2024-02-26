@@ -422,16 +422,10 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         *current_label_stack.back() << label_name << ":\n";
         *current_label_stack.back() << beg_label;
 
-        int total_tmpValue_t = total_tmpValue;
-
         run(get_op(), this_func, Current_context);
         while(next_op()!= OP_END_FUNC) {
           run(get_op(), current_label_stack.back(), Current_context);
         }
-
-        int total_tmpValue_back = total_tmpValue;
-        int total_tmpValue_diff = total_tmpValue_back - total_tmpValue_t;
-        total_tmpValue = total_tmpValue_t;
 
         stack -= 1;
 
