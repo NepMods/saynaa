@@ -103,9 +103,10 @@ void Parser::emitConstant(std::string value) {
 }
 
 void Parser::endCompiler() {
-  if (bytecode->opcode[bytecode->opcode.size() - 2] != OP_RETURN) {
+  if (bytecode->opcode[bytecode->opcode.size() - 1] != OP_RETURN) {
     emitReturn();
   }
+
 #ifdef DEBUG_PRINT_CODE
   if (!hadError) {
     Debug debug(*bytecode);
@@ -295,7 +296,7 @@ Parser::ParseRule Parser::getRule(TokenType type) {
       [TK_NULL] = {&Parser::literal, nullptr, PREC_NONE},
       [TK_OR] = {nullptr, nullptr, PREC_NONE},
       [TK_PRINT] = {nullptr, nullptr, PREC_NONE},
-      [TK_RETURN] = {&Parser::parseReturn, nullptr, PREC_NONE},
+      [TK_RETURN] = {nullptr, nullptr, PREC_NONE},
       [TK_TRUE] = {&Parser::literal, nullptr, PREC_NONE},
       [TK_LET] = {nullptr, nullptr, PREC_NONE},
       [TK_WHILE] = {nullptr, nullptr, PREC_NONE},
@@ -330,11 +331,12 @@ void Parser::blockBody() {
 
 void Parser::parseReturn() {
   if (check(TK_SCOLON)) {
-    emitByte(OP_NULL);
+    emitReturn();
   } else {
     expression();
+    consume(TK_SCOLON, "Expect ';' after return value.");
+    emitByte(OP_RETURN);
   }
-  emitByte(OP_RETURN);
 }
 
 void Parser::functionDeclaration() {
@@ -349,7 +351,11 @@ void Parser::function() {
   consume(TK_RPARAN, "Expect ')' after parameter.");
   consume(TK_LBRACE, "Expect '{' before function body.");
   blockBody();
-  emitByte(OP_NULL);
+
+  // if blockBody contains return statement skip OP_NULL
+  if (bytecode->opcode[bytecode->opcode.size() - 1] != OP_RETURN) {
+    emitByte(OP_NULL);
+  }
 }
 
 void Parser::expressionStatement() {
@@ -377,6 +383,8 @@ void Parser::declaration() {
 void Parser::statement() {
   if (match(TK_PRINT)) {
     printStatement();
+  } else if (match(TK_RETURN)) {
+    parseReturn();
   } else {
     expressionStatement();
   }
