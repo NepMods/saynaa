@@ -1,10 +1,10 @@
 let Global_var = "global Variable! \n";
 function test() {
-
+  let local_var = "Local (test)! \n";
   function jj() {
-    print(1);
+    print(local_var);
+    return 0;
   }
-  let local_var = "Local Vadhfdghriable! \n";
   jj();
   print(local_var);
   return 8;

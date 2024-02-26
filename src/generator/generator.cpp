@@ -361,7 +361,7 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
                       << "]\n";
         if (iter != Ccontext->stackVar.end()) {
-          store_ptrAllVariable((iter->variableLocation) * 8);
+          runtimeError("variable "+name+" is already defined in "+Ccontext->name+"!");
 
         } else {
           Ccontext->stackVar.push_back({name, total_allVariable});
@@ -404,19 +404,34 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         current_label_stack.push_back(this_func);
 
         std::string label_name = bytecode->name[next_op()];
-        CodeContext *Current_context = new CodeContext();
-        Current_context->name = label_name;
-        Current_context->stackVar = {};
-        Pcontext.push_back(Current_context);
+
+        CodeContext *Current_context;
+        if(Ccontext == GContext) {
+          Current_context = new CodeContext();
+          Current_context->name = label_name;
+          Current_context->stackVar = {};
+          Pcontext.push_back(Current_context);
+        } else {
+          Current_context = new CodeContext();
+          Current_context->name = label_name;
+          Current_context->stackVar.reserve(Ccontext->stackVar.size());
+          std::copy(Ccontext->stackVar.begin(), Ccontext->stackVar.end(), std::back_inserter(Current_context->stackVar));
+          Pcontext.push_back(Current_context);
+        }
 
         *current_label_stack.back() << label_name << ":\n";
         *current_label_stack.back() << beg_label;
 
+        int total_tmpValue_t = total_tmpValue;
+
         run(get_op(), this_func, Current_context);
         while(next_op()!= OP_END_FUNC) {
           run(get_op(), current_label_stack.back(), Current_context);
-
         }
+
+        int total_tmpValue_back = total_tmpValue;
+        int total_tmpValue_diff = total_tmpValue_back - total_tmpValue_t;
+        total_tmpValue = total_tmpValue_t;
 
         stack -= 1;
 
