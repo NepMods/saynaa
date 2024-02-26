@@ -28,10 +28,10 @@ typedef enum {
   TK_NOTEQ, // !=
   TK_EQ,    // =
   TK_EQEQ,  // ==
-  TK_GT,    // <
-  TK_GTEQ,  // <=
-  TK_LT,    // >
-  TK_LTEQ,  // >=
+  TK_GT,    // >
+  TK_GTEQ,  // >=
+  TK_LT,    // <
+  TK_LTEQ,  // <=
 
   // Literals.
   TK_NAME,   // NAME

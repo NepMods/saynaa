@@ -29,10 +29,6 @@ class Generator {
     NEQ_METHOD,
     UNK_METHOD,
   };
-  typedef struct {
-    std::stringstream *code;
-  } test_weeye;
-
 
   typedef struct {
       std::string name;
@@ -69,7 +65,6 @@ class Generator {
   std::vector<std::stringstream *> current_label_stack;
   std::stringstream *assembly_body;
   std::stringstream assembly_main;
-  std::stringstream assembly_text; // SOON_REMOVING
   std::stringstream assembly_data;
 
   std::vector<std::string> assembly_label;
