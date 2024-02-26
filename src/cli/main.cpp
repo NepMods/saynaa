@@ -23,13 +23,13 @@ int main(int argc, const char *argv[]) {
     std::cerr << "Compilling Failed!" << std::endl;
     return 1;
   }
-
   Generator gen("saynaa.asm");
+
   gen.main(bytecode);
-  gen.free();
-  bytecode.free();
+
 
   std::puts(""); // new line
+
   if (std::system("nasm -g -f elf64 saynaa.asm && ld saynaa.o -o app"))
     return 1;
   return 0;

@@ -127,7 +127,7 @@ uint32_t Parser::parseVariable(const char *errorMessage) {
 }
 
 void Parser::defineVariable(uint32_t global) {
-  emitBytes(OP_DEFINE_GLOBAL, global);
+  emitBytes(OP_DEFINE_LOCAL, global);
 }
 
 void Parser::binary() {
@@ -182,7 +182,7 @@ void Parser::call() {
   consume(TK_RPARAN, "Expect ')' after arguments.");
   emitBytes(OP_CALL, argCount);
 }
-
+ 
 void Parser::literal() {
   switch (previous.type) {
   case TK_FALSE:
@@ -217,9 +217,9 @@ void Parser::namedVariable(Token name) {
   uint32_t arg = identifierConstant(&name);
   if (match(TK_EQ)) {
     expression();
-    emitBytes(OP_SET_GLOBAL, arg);
+    emitBytes(OP_SET_LOCAL, arg);
   } else {
-    emitBytes(OP_GET_GLOBAL, arg);
+    emitBytes(OP_GET_LOCAL, arg);
   }
 }
 
