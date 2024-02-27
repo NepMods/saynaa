@@ -125,9 +125,6 @@ Generator::Generator(std::string filename) : assembly_filename(filename) {
   *current_label << "    pop rbp\n";
   *current_label << "    ret\n\n";
   push_label();
-
-  assembly_main << "\n\nmain:\n";
-  assembly_main << beg_label;
 }
 
 void Generator::free() {
@@ -399,12 +396,13 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         break;
       }
       case OP_BEG_FUNC: {
-        stack += 1;
         std::stringstream *this_func = new std::stringstream();
         current_label_stack.push_back(this_func);
 
         std::string label_name = bytecode->name[next_op()];
-
+        if(label_name == "main") { 
+          stack = 1;
+        }
         CodeContext *Current_context;
         if(Ccontext == GContext) {
           Current_context = new CodeContext();
@@ -425,10 +423,10 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         while(next_op()!= OP_END_FUNC) {
           run(get_op(), current_label_stack.back(), Current_context);
         }
-
-        stack -= 1;
-
+        if(!stack) {
+          
         run(get_op(), current_label_stack.back(), Current_context);
+        }
         current_label_stack.pop_back();
         Pcontext.pop_back();
         assembly_label.push_back(this_func->str());
@@ -465,6 +463,14 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   while(next_op() != OP_NONE) {
     run(get_op(), &assembly_main, GContext);
   }
+
+  std::stringstream assembly_main_stream;
+  if(stack == 0) {
+    assembly_main_stream << "\n\nmain:\n";
+    assembly_main_stream << beg_label;
+  }
+  assembly_main_stream << assembly_main.str();
+
   // InterpretResult result = run();
 
   std::stringstream assembly_start;
@@ -483,14 +489,14 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   assembly_start << "    mov rax, 60\n";
   assembly_start << "    syscall\n";
 
-  assembly_main << end_label;
+  assembly_main_stream << end_label;
 
   std::ofstream outputFile(assembly_filename);
   outputFile << assembly_data.str();
   for (int i = 0; i != assembly_label.size(); i++) {
     outputFile << assembly_label[i];
   }
-  outputFile << assembly_main.str();
+  outputFile << assembly_main_stream.str();
   outputFile << assembly_start.str();
   outputFile.close();
 

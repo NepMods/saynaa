@@ -80,6 +80,7 @@ class Parser {
   void printStatement();
   void declaration();
   void statement();
+  int isMainThere = 0;
 
 public:
   Parser(const std::string &source);

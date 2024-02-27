@@ -104,7 +104,10 @@ void Parser::emitConstant(std::string value) {
 
 void Parser::endCompiler() {
   if (bytecode->opcode[bytecode->opcode.size() - 1] != OP_RETURN) {
+    if(!isMainThere) {
+
     emitReturn();
+    }
   }
 
 #ifdef DEBUG_PRINT_CODE
@@ -341,6 +344,9 @@ void Parser::parseReturn() {
 
 void Parser::functionDeclaration() {
   uint32_t global = parseVariable("Expect function name.");
+  if(bytecode->name.back() == "main") {
+    isMainThere = 1;
+  }
   emitBytes(OP_BEG_FUNC, global);
   function();
   emitByte(OP_END_FUNC);

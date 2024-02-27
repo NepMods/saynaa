@@ -1,15 +1,5 @@
-let Global_var = "global Variable! \n";
-function test() {
-  let local_var = "Local (test)! \n";
-  function jj() {
-    print(local_var);
-    return 0;
-  }
-  jj();
-  print(local_var);
-  return 8;
+function madin() {
+  print("hello\n");
+  return 07;
 }
-
-test();
-print(Global_var);
-return 90;
+return madin();
