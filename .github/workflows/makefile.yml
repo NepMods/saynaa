@@ -16,3 +16,9 @@ jobs:
 
     - name: Make
       run: make
+
+    - name: Test
+      run: ./saynaa example.sa
+
+    - name: App Test
+      run: ./app
