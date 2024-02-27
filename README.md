@@ -31,6 +31,17 @@ return OK;
 
 ```
 
+## Main Function
+
+```
+function main() {
+    print("Inside Main function");
+    return 0; 
+}
+
+#output : Inside Main function
+```
+
 ## Code Format
 
 i am used clang-format inside vscode
