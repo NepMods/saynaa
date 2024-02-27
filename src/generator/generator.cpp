@@ -400,8 +400,10 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         current_label_stack.push_back(this_func);
 
         std::string label_name = bytecode->name[next_op()];
+        bool ismain = false;
         if(label_name == "main") { 
           stack = 1;
+          ismain = true;
         }
         CodeContext *Current_context;
         if(Ccontext == GContext) {
@@ -423,9 +425,9 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         while(next_op()!= OP_END_FUNC) {
           run(get_op(), current_label_stack.back(), Current_context);
         }
-        if(!stack) {
+        if(!ismain) {
           
-        run(get_op(), current_label_stack.back(), Current_context);
+          run(get_op(), current_label_stack.back(), Current_context);
         }
         current_label_stack.pop_back();
         Pcontext.pop_back();
