@@ -1,5 +1,4 @@
-function madin() {
+function main() {
   print("hello\n");
   return 07;
 }
-return madin();
