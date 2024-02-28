@@ -2,3 +2,5 @@ function main() {
   print("hello\n");
   return 07;
 }
+
+print("outside main");

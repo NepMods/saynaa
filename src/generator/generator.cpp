@@ -20,6 +20,7 @@ Generator::Generator(std::string filename) : assembly_filename(filename) {
   assembly_data << "section .data\n";
   assembly_data << "    allVariable: dq 0\n";
   assembly_data << "    tmpValue: dq 0\n";
+  assembly_data << "    exit_code: dq 0\n";
   assembly_data << "\n";
   assembly_data << "    TYPE_STR: equ 10\n";
   assembly_data << "    TYPE_INT: equ 20\n";
@@ -442,7 +443,11 @@ InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeC
         break;
       }
       case OP_RETURN: {
-        // solved duplicate end_lael
+        *assembly_body << "    ; OP_RETURN\n";
+        *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8 << "]\n";
+        *assembly_body << "    mov rbx, qword[rax+1]\n";
+        *assembly_body << "    mov qword[exit_code], rbx\n";
+        *assembly_body << "    ; OP_RETURN\n";
         break;
       }
       }
@@ -485,9 +490,10 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   assembly_start << "    ; call main function\n";
   assembly_start << "    call main\n";
   assembly_start << "    ; exit\n";
-  assembly_start << "    mov rax, qword[rax+" << (--total_tmpValue) * 8 << "]\n";
-  assembly_start << "    mov rbx, qword[rax+1]\n";
-  assembly_start << "    mov rdi, rbx\n";
+  //assembly_start << "    mov rax, qword[rax+" << (--total_tmpValue) * 8 << "]\n";
+  //assembly_start << "    mov rbx, qword[rax+1]\n";
+  //assembly_start << "    mov rdi, rbx\n";
+  assembly_start << "    mov rdi, [exit_code]\n";
   assembly_start << "    mov rax, 60\n";
   assembly_start << "    syscall\n";
 
