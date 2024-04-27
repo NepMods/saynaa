@@ -15,15 +15,8 @@
 #include <sstream>
 
 Generator::Generator(std::string filename) : assembly_filename(filename) {
-  std::stringstream cur_lbl;
-  current_label = &cur_lbl;
-  assembly_data << "section .data\n";
-  assembly_data << "    allVariable: dq 0\n";
-  assembly_data << "    tmpValue: dq 0\n";
-  assembly_data << "    exit_code: dq 0\n";
-  assembly_data << "\n";
-  assembly_data << "    TYPE_STR: equ 10\n";
-  assembly_data << "    TYPE_INT: equ 20\n";
+  current_label = new std::stringstream;
+  assembly_data << data_section;
 
   *current_label << "section .text\n";
   *current_label << "global _start\n\n";
@@ -128,18 +121,18 @@ Generator::Generator(std::string filename) : assembly_filename(filename) {
   push_label();
 }
 
-void Generator::free() {
-}
+void Generator::free() {}
 
-auto Generator::checkVariable(std::string name, CodeContext* cCcontext) {
-  if(cCcontext == nullptr) {
-
-  return std::ranges::find_if(
-      Ccontext->stackVar, [&](const stackVariable &var) { return var.name == name; });
+auto Generator::checkVariable(std::string name, CodeContext *cCcontext) {
+  if (cCcontext == nullptr) {
+    return std::ranges::find_if(
+        Ccontext->stackVar,
+        [&](const stackVariable &var) { return var.name == name; });
   }
 
   return std::ranges::find_if(
-      cCcontext->stackVar, [&](const stackVariable &var) { return var.name == name; });
+      cCcontext->stackVar,
+      [&](const stackVariable &var) { return var.name == name; });
 }
 
 void Generator::runtimeError(const std::string error) {
@@ -196,12 +189,11 @@ void Generator::BinaryOP(u_int32_t type) {
 
 void Generator::store_Variable(const std::string &type,
                                const std::string &val) {
-  
+
   *assembly_body << "    allocateSpace 9\n";
 
   *assembly_body << "    mov byte[rax], " << type << "\n";
   *assembly_body << "    mov qword[rax+1], " << val << "\n";
-
 }
 
 void Generator::store_ptrAllVariable(int location) {
@@ -217,241 +209,289 @@ void Generator::store_tmpValue() {
   *assembly_body << "    mov rax, rbx\n";
 }
 
-void Generator::get_tmpValue(const std::string &reg, std::stringstream *ss,
-                             int *temp_value) {
+void Generator::get_tmpValue(const std::string &reg, std::stringstream *ss) {
   if (ss == nullptr) {
     ss = assembly_body;
   }
-  int local_total_tmpValue = 2;
-  if (temp_value == nullptr) {
-    local_total_tmpValue = total_tmpValue;
-  }
+
   *ss << "    mov " << reg << ", qword[tmpValue]\n";
-  *ss << "    mov " << reg << ", qword[" << reg << "+"
-      << (--local_total_tmpValue) * 8 << "]\n";
+  *ss << "    mov " << reg << ", qword[" << reg << "+" << (--total_tmpValue) * 8
+      << "]\n";
   *ss << "    mov " << reg << ", qword[" << reg << "+1]\n";
 }
 
+void Generator::condition_label(int indx, std::string label) {
+
+  bytecode->value.push_back(label);
+  uint32_t constant = bytecode->value.size() - 1;
+
+  bytecode->opcode.insert(bytecode->opcode.begin() + indx, OP_JUMP_HERE);
+  bytecode->lines.insert(bytecode->lines.begin() + indx, 22);
+  bytecode->opcode.insert(bytecode->opcode.begin() + indx + 1, constant);
+  bytecode->lines.insert(bytecode->lines.begin() + indx + 1, 23);
+
+  opcode = bytecode->opcode;
+}
+
 uint32_t Generator::get_op() {
-  if(index < opcode.size()) {
+  if (index < opcode.size()) {
     return opcode[index];
   }
   return OP_NONE;
 }
+
 uint32_t Generator::next_op() {
   index++;
   return get_op();
 }
+
 uint32_t Generator::peek_op(int offset) {
-  if(index+offset < opcode.size()) {
-    return opcode[index+offset];
+  if (index + offset < opcode.size()) {
+    return opcode[index + offset];
   }
   return OP_NONE;
 }
+
 void Generator::ignore_to(uint32_t opfcode) {
-  while(peek_op() != opfcode) {
+  while (peek_op() != opfcode) {
     next_op();
-    if(get_op() == OP_NONE) {
+    if (get_op() == OP_NONE) {
       runtimeError("Unexpected end");
     }
   }
 }
+
 // generate x86_64 nasm assembly
-InterpretResult Generator::run(uint32_t opcode, std::stringstream *stream, CodeContext *Ccontext) {
-    assembly_body = current_label_stack.back();
-    Ccontext = Pcontext.back();
-    switch (opcode) {
+InterpretResult Generator::run(uint32_t pram_opcode, std::stringstream *stream,
+                               CodeContext *Ccontext) {
+  assembly_body = current_label_stack.back();
+  Ccontext = Pcontext.back();
+  switch (pram_opcode) {
 
-      case OP_CONSTANT: {
-        // OP_CONSTANT: is value holder
-        auto bcode = bytecode->value[next_op()];
-        if (peek_op() == OP_POP) {
-          index++;
-          return INTERPRET_OK;
-        }
+  case OP_CONSTANT: {
+    // OP_CONSTANT: is value holder
+    auto bcode = bytecode->value[next_op()];
+    if (peek_op() == OP_POP) {
+      index++;
+      return INTERPRET_OK;
+    }
 
-        *assembly_body << "    ; tmpValue\n";
-        if (std::holds_alternative<int>(bcode)) {
-          int value = std::get<int>(bcode);
-          store_Variable("TYPE_INT", std::to_string(value));
-        } else if (std::holds_alternative<std::string>(bcode)) {
-          std::string value = std::get<std::string>(bcode);
-          std::string rondomText = generateRandomText(7);
+    *assembly_body << "    ; tmpValue\n";
+    if (std::holds_alternative<int>(bcode)) {
+      int value = std::get<int>(bcode);
+      store_Variable("TYPE_INT", std::to_string(value));
+    } else if (std::holds_alternative<std::string>(bcode)) {
+      std::string value = std::get<std::string>(bcode);
+      std::string rondomText = generateRandomText(7);
 
-          // example: ?_rondom: db 0x48, ..., 0x00
-          assembly_data << "    ?_" << rondomText << ": db "
-                        << stringToHexDecimal(value);
+      // example: ?_rondom: db 0x48, ..., 0x00
+      assembly_data << "    ?_" << rondomText << ": db "
+                    << stringToHexDecimal(value);
 
-          *assembly_body << "    lea r15, [?_" << rondomText << "]\n";
-          store_Variable("TYPE_STR", "r15");
-        }
-        store_tmpValue();
-        *assembly_body << "    ; tmpValue\n";
-        break;
-      }
+      *assembly_body << "    lea r15, [?_" << rondomText << "]\n";
+      store_Variable("TYPE_STR", "r15");
+    }
+    store_tmpValue();
+    *assembly_body << "    ; tmpValue\n";
+    break;
+  }
 
-      case OP_NOT:
-        get_tmpValue("rax");
-        *assembly_body << "    test rax, rax\n";
-        *assembly_body << "    sete al\n";
-        *assembly_body << "    movzx eax, al\n";
-        *assembly_body << "    mov r15, rax\n";
-        store_Variable("TYPE_INT", "r15");
-        store_tmpValue();
-        break;
-      case OP_NULL:
-        store_Variable("TYPE_INT", std::to_string(0));
-        store_tmpValue();
-        break;
-      case OP_TRUE:
-        store_Variable("TYPE_INT", std::to_string(1));
-        store_tmpValue();
-        break;
-      case OP_FALSE:
-        store_Variable("TYPE_INT", std::to_string(0));
-        store_tmpValue();
-        break;
-      case OP_POP:
-        --total_tmpValue;
-        break;
-      case OP_SET_LOCAL: {
-        std::string name = bytecode->name[next_op()];
-        auto iter = checkVariable(name, Ccontext);
-        *assembly_body << "    ; setLocal\n";
-        *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
-                      << "]\n";
-        if (iter == Ccontext->stackVar.end()) {
-          // not found: variable not defined before
-          runtimeError("variable "+name+" not defined in "+Ccontext->name+"!");
-        }
+  case OP_NOT:
+    get_tmpValue("rax");
+    *assembly_body << "    test rax, rax\n";
+    *assembly_body << "    sete al\n";
+    *assembly_body << "    movzx eax, al\n";
+    *assembly_body << "    mov r15, rax\n";
+    store_Variable("TYPE_INT", "r15");
+    store_tmpValue();
+    break;
+  case OP_NULL:
+    store_Variable("TYPE_INT", std::to_string(0));
+    store_tmpValue();
+    break;
+  case OP_TRUE:
+    store_Variable("TYPE_INT", std::to_string(1));
+    store_tmpValue();
+    break;
+  case OP_FALSE:
+    store_Variable("TYPE_INT", std::to_string(0));
+    store_tmpValue();
+    break;
+  case OP_POP:
+    --total_tmpValue;
+    break;
+  case OP_SET_LOCAL: {
+    std::string name = bytecode->name[next_op()];
+    auto iter = checkVariable(name, Ccontext);
+    *assembly_body << "    ; setLocal\n";
+    *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                   << "]\n";
+    if (iter == Ccontext->stackVar.end()) {
+      // not found: variable not defined before
+      runtimeError("variable " + name + " not defined in " + Ccontext->name +
+                   "!");
+    }
 
-        store_ptrAllVariable((iter->variableLocation) * 8);
-        *assembly_body << "    ; setLocal\n";
-        break;
-      }
-      case OP_GET_LOCAL: {
-        std::string name = bytecode->name[next_op()];
-        if (peek_op() == OP_CALL) {
-          index++; // OP_CALL
-          index++; // How many parameters (now exists 0)
-              // you can see in: opcode[i+1]
-          // TODO: function has parameter
-          *assembly_body << "    call " << name << "\n";
-          return INTERPRET_OK;
-        }
-        auto iter = checkVariable(name, Ccontext);
-        if (iter == Ccontext->stackVar.end()) {
-          runtimeError("variable "+ name +" not defined "+Ccontext->name+"!");
-        }
-        *assembly_body << "    ; getLocal\n";
-        *assembly_body << "    mov rax, qword[allVariable]\n";
-        *assembly_body << "    mov rbx, qword[rax+" << iter->variableLocation * 8
-                      << "]\n";
-        *assembly_body << "    mov rax, rbx\n";
-        store_tmpValue();
-        *assembly_body << "    ; getLocal\n";
-        break;
-      }
-      case OP_DEFINE_LOCAL: {
-        std::string name = bytecode->name[next_op()];
-        auto iter = checkVariable(name, Ccontext);
-        *assembly_body << "    ; defineLocal\n";
-        *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
-                      << "]\n";
-        if (iter != Ccontext->stackVar.end()) {
-          runtimeError("variable "+name+" is already defined in "+Ccontext->name+"!");
+    store_ptrAllVariable((iter->variableLocation) * 8);
+    *assembly_body << "    ; setLocal\n";
+    break;
+  }
+  case OP_GET_LOCAL: {
+    std::string name = bytecode->name[next_op()];
+    if (peek_op() == OP_CALL) {
+      index++; // OP_CALL
+      index++; // How many parameters (now exists 0)
+               // you can see in: opcode[i+1]
+      // TODO: function has parameter
+      *assembly_body << "    call " << name << "\n";
+      return INTERPRET_OK;
+    }
+    auto iter = checkVariable(name, Ccontext);
+    if (iter == Ccontext->stackVar.end()) {
+      runtimeError("variable " + name + " not defined " + Ccontext->name + "!");
+    }
+    *assembly_body << "    ; getLocal\n";
+    *assembly_body << "    mov rax, qword[allVariable]\n";
+    *assembly_body << "    mov rbx, qword[rax+" << iter->variableLocation * 8
+                   << "]\n";
+    *assembly_body << "    mov rax, rbx\n";
+    store_tmpValue();
+    *assembly_body << "    ; getLocal\n";
+    break;
+  }
+  case OP_DEFINE_LOCAL: {
+    std::string name = bytecode->name[next_op()];
+    auto iter = checkVariable(name, Ccontext);
+    *assembly_body << "    ; defineLocal\n";
+    *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                   << "]\n";
+    if (iter != Ccontext->stackVar.end()) {
+      runtimeError("variable " + name + " is already defined in " +
+                   Ccontext->name + "!");
 
-        } else {
-          Ccontext->stackVar.push_back({name, total_allVariable});
-          store_ptrAllVariable((total_allVariable++) * 8);
-        }
-        *assembly_body << "    ; defineLocal\n";
-        break;
-      }
-      case OP_ADD:
-        BinaryOP(ADD_METHOD);
-        break;
-      case OP_SUBTRACT:
-        BinaryOP(SUB_METHOD);
-        break;
-      case OP_MULTIPLY:
-        BinaryOP(MUL_METHOD);
-        break;
-      case OP_DIVIDE:
-        BinaryOP(DIV_METHOD);
-        break;
-      case OP_EQUAL:
-        BinaryOP(EQU_METHOD);
-        break;
-      case OP_NEQU:
-        BinaryOP(NEQ_METHOD);
-        break;
-      case OP_PRINT: {
-        *assembly_body << "    ; print\n";
-        *assembly_body << "    mov rdi, qword[rax+" << (--total_tmpValue) * 8
-                      << "]\n";
-        *assembly_body << "    call print\n";
-        *assembly_body << "    ; print\n";
+    } else {
+      Ccontext->stackVar.push_back({name, total_allVariable});
+      store_ptrAllVariable((total_allVariable++) * 8);
+    }
+    *assembly_body << "    ; defineLocal\n";
+    break;
+  }
+  case OP_ADD:
+    BinaryOP(ADD_METHOD);
+    break;
+  case OP_SUBTRACT:
+    BinaryOP(SUB_METHOD);
+    break;
+  case OP_MULTIPLY:
+    BinaryOP(MUL_METHOD);
+    break;
+  case OP_DIVIDE:
+    BinaryOP(DIV_METHOD);
+    break;
+  case OP_EQUAL:
+    BinaryOP(EQU_METHOD);
+    break;
+  case OP_NEQU:
+    BinaryOP(NEQ_METHOD);
+    break;
+  case OP_PRINT: {
+    *assembly_body << "    ; print\n";
+    *assembly_body << "    mov rdi, qword[rax+" << (--total_tmpValue) * 8
+                   << "]\n";
+    *assembly_body << "    call print\n";
+    *assembly_body << "    ; print\n";
+    break;
+  }
+  case OP_BEG_FUNC: {
+    std::stringstream *this_func = new std::stringstream();
+    current_label_stack.push_back(this_func);
 
+    std::string label_name = bytecode->name[next_op()];
+    bool ismain = false;
+    if (label_name == "main") {
+      stack = 1;
+      ismain = true;
+    }
+    CodeContext *Current_context;
+    if (Ccontext == GContext) {
+      Current_context = new CodeContext();
+      Current_context->name = label_name;
+      Current_context->stackVar = {};
+      Pcontext.push_back(Current_context);
+    } else {
+      Current_context = new CodeContext();
+      Current_context->name = label_name;
+      Current_context->stackVar.reserve(Ccontext->stackVar.size());
+      std::copy(Ccontext->stackVar.begin(), Ccontext->stackVar.end(),
+                std::back_inserter(Current_context->stackVar));
+      Pcontext.push_back(Current_context);
+    }
 
-        break;
-      }
-      case OP_BEG_FUNC: {
-        std::stringstream *this_func = new std::stringstream();
-        current_label_stack.push_back(this_func);
+    *current_label_stack.back() << label_name << ":\n";
+    *current_label_stack.back() << beg_label;
 
-        std::string label_name = bytecode->name[next_op()];
-        bool ismain = false;
-        if(label_name == "main") { 
-          stack = 1;
-          ismain = true;
-        }
-        CodeContext *Current_context;
-        if(Ccontext == GContext) {
-          Current_context = new CodeContext();
-          Current_context->name = label_name;
-          Current_context->stackVar = {};
-          Pcontext.push_back(Current_context);
-        } else {
-          Current_context = new CodeContext();
-          Current_context->name = label_name;
-          Current_context->stackVar.reserve(Ccontext->stackVar.size());
-          std::copy(Ccontext->stackVar.begin(), Ccontext->stackVar.end(), std::back_inserter(Current_context->stackVar));
-          Pcontext.push_back(Current_context);
-        }
+    while (next_op() != OP_END_FUNC) {
+      run(get_op(), current_label_stack.back(), Current_context);
+    }
+    if (!ismain) {
+      run(get_op(), current_label_stack.back(), Current_context);
+    }
+    current_label_stack.pop_back();
+    Pcontext.pop_back();
+    assembly_label.push_back(this_func->str());
 
-        *current_label_stack.back() << label_name << ":\n";
-        *current_label_stack.back() << beg_label;
+    break;
+  }
+  case OP_END_FUNC: {
+    *assembly_body << end_label;
 
-        while(next_op()!= OP_END_FUNC) {
-          run(get_op(), current_label_stack.back(), Current_context);
-        }
-        if(!ismain) {
-          
-          run(get_op(), current_label_stack.back(), Current_context);
-        }
-        current_label_stack.pop_back();
-        Pcontext.pop_back();
-        assembly_label.push_back(this_func->str());
+    break;
+  }
+  case OP_JUMP: {
+    *assembly_body << "    ; OP_JUMP\n";
+    int goto_path = next_op();
 
+    std::string rondom_label = "?_" + generateRandomText(7);
+    *assembly_body << "    ; " << rondom_label << "\n";
+    condition_label(goto_path, rondom_label);
 
-        break;
-      }
-      case OP_END_FUNC: {
-        *assembly_body << end_label;
+    *assembly_body << "    jmp " << rondom_label << "\n";
+    break;
+  }
+  case OP_JUMP_IF_NOT: {
+    *assembly_body << "    ; OP_JUMP_IF_NOT\n";
+    int goto_path = next_op();
 
-        break;
-      }
-      case OP_RETURN: {
-        *assembly_body << "    ; OP_RETURN\n";
-        *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8 << "]\n";
-        *assembly_body << "    mov rbx, qword[rax+1]\n";
-        *assembly_body << "    mov qword[exit_code], rbx\n";
-        *assembly_body << "    ; OP_RETURN\n";
-        break;
-      }
-      }
-    return INTERPRET_OK;
+    std::string rondom_label = "?_" + generateRandomText(7);
+    *assembly_body << "    ; " << rondom_label << "\n";
+
+    condition_label(goto_path, rondom_label);
+
+    *assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                   << "]\n";
+    *assembly_body << "    mov rax, qword[rax+1]\n";
+    *assembly_body << "    cmp rax, 0\n";
+    *assembly_body << "    jz " << rondom_label << "\n";
+    break;
+  }
+  case OP_JUMP_HERE: {
+    *assembly_body << "    ; OP_JUMP_HERE\n";
+    std::string goto_path = std::get<std::string>(bytecode->value[next_op()]);
+
+    *assembly_body << goto_path << ":\n";
+    break;
+  }
+  case OP_RETURN: {
+    *assembly_body << "    ; OP_RETURN\n";
+    /**assembly_body << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                   << "]\n";
+    *assembly_body << "    mov rbx, qword[rax+1]\n";
+    *assembly_body << "    mov qword[exit_code], rbx\n";*/
+    *assembly_body << "    ; OP_RETURN\n";
+    break;
+  }
+  }
+  return INTERPRET_OK;
 }
 
 InterpretResult Generator::main(Bytecode &pBytecode) {
@@ -467,12 +507,12 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   assembly_body = &assembly_main;
   current_label_stack.push_back(&assembly_main);
 
-  while(next_op() != OP_NONE) {
+  while (next_op() != OP_NONE) {
     run(get_op(), &assembly_main, GContext);
   }
 
   std::stringstream assembly_main_stream;
-  if(stack == 0) {
+  if (stack == 0) {
     assembly_main_stream << "\n\nmain:\n";
     assembly_main_stream << beg_label;
   }
@@ -490,10 +530,11 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   assembly_start << "    ; call main function\n";
   assembly_start << "    call main\n";
   assembly_start << "    ; exit\n";
-  //assembly_start << "    mov rax, qword[rax+" << (--total_tmpValue) * 8 << "]\n";
-  //assembly_start << "    mov rbx, qword[rax+1]\n";
-  //assembly_start << "    mov rdi, rbx\n";
-  assembly_start << "    mov rdi, [exit_code]\n";
+  assembly_start << "    mov rax, qword[rax+" << (--total_tmpValue) * 8
+                 << "]\n";
+  assembly_start << "    mov rbx, qword[rax+1]\n";
+  assembly_start << "    mov rdi, rbx\n";
+  // assembly_start << "    mov rdi, [exit_code]\n";
   assembly_start << "    mov rax, 60\n";
   assembly_start << "    syscall\n";
 
@@ -507,6 +548,9 @@ InterpretResult Generator::main(Bytecode &pBytecode) {
   outputFile << assembly_main_stream.str();
   outputFile << assembly_start.str();
   outputFile.close();
+
+  // Debug debug(*bytecode);
+  // debug.disassemble("OPCODE");
 
   return INTERPRET_OK;
 }

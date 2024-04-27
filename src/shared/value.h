@@ -30,11 +30,16 @@ typedef enum {
   OP_DIVIDE,
   OP_NOT,
   OP_NEGATE,
+  OP_PARAM,
   OP_BEG_FUNC,
   OP_END_FUNC,
   OP_CALL,
   OP_PRINT,
+  OP_JUMP,
+  OP_JUMP_IF_NOT,
+  OP_JUMP_HERE,
   OP_RETURN,
+  OP_TEST,
   OP_NONE,
 } OpCode;
 
@@ -49,7 +54,7 @@ typedef struct {
 } Bytecode;
 
 typedef struct {
-  std::string name;     // variable name
+  std::string name;         // variable name
   int variableLocation = 0; // variable location in assembly
 } stackVariable;
 

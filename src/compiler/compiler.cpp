@@ -80,33 +80,35 @@ void Parser::emitReturn() {
   emitByte(OP_RETURN);
 }
 
-uint32_t Parser::makeConstant(int value) {
+uint32_t Parser::makeConstant(std::variant<int, std::string> value) {
   bytecode->value.push_back(value);
   uint32_t constant = bytecode->value.size() - 1;
 
   return constant;
 }
 
-uint32_t Parser::makeConstant(std::string value) {
-  bytecode->value.push_back(value);
-  uint32_t constant = bytecode->value.size() - 1;
-
-  return constant;
+int Parser::emitJump(uint8_t instruction) {
+  emitByte(instruction);
+  emitByte(bytecode->opcode.size());
+  return bytecode->opcode.size() - 1;
 }
 
-void Parser::emitConstant(int value) {
-  emitBytes(OP_CONSTANT, makeConstant(value));
+void Parser::patchJump(int offset, int value) {
+  if (value == 0)
+    bytecode->opcode[offset] = bytecode->opcode.size();
+  else
+    bytecode->opcode[offset] = bytecode->opcode.size() + value;
 }
 
-void Parser::emitConstant(std::string value) {
+void Parser::emitConstant(std::variant<int, std::string> value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
 void Parser::endCompiler() {
   if (bytecode->opcode[bytecode->opcode.size() - 1] != OP_RETURN) {
-    if(!isMainThere) {
+    if (!isMainThere) {
 
-    emitReturn();
+      emitReturn();
     }
   }
 
@@ -186,7 +188,7 @@ void Parser::call() {
   consume(TK_RPARAN, "Expect ')' after arguments.");
   emitBytes(OP_CALL, argCount);
 }
- 
+
 void Parser::literal() {
   switch (previous.type) {
   case TK_FALSE:
@@ -344,7 +346,7 @@ void Parser::parseReturn() {
 
 void Parser::functionDeclaration() {
   uint32_t global = parseVariable("Expect function name.");
-  if(bytecode->name.back() == "main") {
+  if (bytecode->name.back() == "main") {
     isMainThere = 1;
   }
   emitBytes(OP_BEG_FUNC, global);
@@ -376,6 +378,27 @@ void Parser::printStatement() {
   emitByte(OP_PRINT);
 }
 
+void Parser::ifStatement() {
+  consume(TK_LPARAN, "Expect '(' after 'if'.");
+  expression();
+  consume(TK_RPARAN, "Expect ')' after condition.");
+
+  int jump_index = 0;
+
+  int thenJump = emitJump(OP_JUMP_IF_NOT);
+  statement();
+
+  int elseJump = emitJump(OP_JUMP);
+
+  patchJump(thenJump);
+
+  if (match(TK_ELSE)) {
+    //jump_index = jump_index+2;
+    statement();
+  }
+  patchJump(elseJump, 2);
+}
+
 void Parser::declaration() {
   if (match(TK_LET)) {
     varDeclaration();
@@ -391,6 +414,10 @@ void Parser::statement() {
     printStatement();
   } else if (match(TK_RETURN)) {
     parseReturn();
+  } else if (match(TK_IF)) {
+    ifStatement();
+  } else if (match(TK_LBRACE)) {
+    blockBody();
   } else {
     expressionStatement();
   }

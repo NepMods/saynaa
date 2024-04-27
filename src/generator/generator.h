@@ -31,14 +31,15 @@ class Generator {
   };
 
   typedef struct {
-      std::string name;
-      std::vector<stackVariable> stackVar;
+    std::string name;
+    std::vector<stackVariable> stackVar;
   } CodeContext;
 
-  InterpretResult run(uint32_t opcode, std::stringstream *stream, CodeContext *Ccontext);
+  InterpretResult run(uint32_t opcode, std::stringstream *stream,
+                      CodeContext *Ccontext);
   void runtimeError(const std::string error);
   void push_label();
-  auto checkVariable(std::string name, CodeContext* cCcontext=nullptr);
+  auto checkVariable(std::string name, CodeContext *cCcontext = nullptr);
   void BinaryOP(u_int32_t type);
 
   void store_Variable(const std::string &type, const std::string &val);
@@ -46,15 +47,17 @@ class Generator {
   int total_allVariable = 0;
 
   void store_tmpValue();
-  void get_tmpValue(const std::string &reg, std::stringstream *ss = nullptr, int *temp_value = nullptr);
+  void get_tmpValue(const std::string &reg, std::stringstream *ss = nullptr);
+  void condition_label(int indx, std::string label);
+  void condition_label(int indx);
   int total_tmpValue = 0;
 
   std::string assembly_filename;
   std::string current_context_name = "Main";
-  CodeContext *GContext;//Global context
-  CodeContext *Ccontext;//Current context
-  std::vector<CodeContext *> Pcontext;//Previous context stack
-  CodeContext *FPcontext;//First Parent context
+  CodeContext *GContext;               // Global context
+  CodeContext *Ccontext;               // Current context
+  std::vector<CodeContext *> Pcontext; // Previous context stack
+  CodeContext *FPcontext;              // First Parent context
 
   Bytecode *bytecode;
 
@@ -76,6 +79,7 @@ class Generator {
   uint32_t next_op();
   uint32_t peek_op(int offset = 1);
   void ignore_to(uint32_t op);
+
 public:
   Generator(std::string filename);
   void free();
