@@ -51,10 +51,10 @@ class Parser {
   void emitByte(uint32_t byte);
   void emitBytes(uint32_t byte1, uint32_t byte2);
   void emitReturn();
-  uint32_t makeConstant(int value);
-  uint32_t makeConstant(std::string value);
-  void emitConstant(int value);
-  void emitConstant(std::string value);
+  uint32_t makeConstant(std::variant<int, std::string> value);
+  int emitJump(uint8_t instruction);
+  void patchJump(int offset, int value = 0);
+  void emitConstant(std::variant<int, std::string> value);
   void endCompiler();
   uint32_t identifierConstant(Token *name);
   uint32_t parseVariable(const char *errorMessage);
@@ -78,6 +78,7 @@ class Parser {
   void function();
   void expressionStatement();
   void printStatement();
+  void ifStatement();
   void declaration();
   void statement();
   int isMainThere = 0;

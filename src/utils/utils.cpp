@@ -74,7 +74,7 @@ std::string stringToHexDecimal(const std::string &value) {
 
 std::string generateRandomText(int length) {
   std::string characters =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      "abcde1fghij2klmno3pqrst4uvwxy5zABCD6EFGHI7JKLMN8OPQRS9TUVWX0YZ";
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> dis(0, characters.size() - 1);

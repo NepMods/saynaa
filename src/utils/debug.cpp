@@ -33,6 +33,8 @@ int Debug::disassembleInstruction(int offset) {
   switch (instruction) {
   case OP_CONSTANT:
     return constantInstructionValue("OP_CONSTANT", offset);
+  case OP_JUMP_HERE:
+    return constantInstructionValue("OP_JUMP_HERE", offset);
   case OP_NULL:
     return simpleInstruction("OP_NULL", offset);
   case OP_TRUE:
@@ -75,8 +77,14 @@ int Debug::disassembleInstruction(int offset) {
     return simpleInstruction("OP_END_FUNC", offset);
   case OP_CALL:
     return callInstruction("OP_CALL", offset);
+  case OP_JUMP_IF_NOT:
+    return jumpInstruction("OP_JUMP_IF_NOT", offset);
+  case OP_JUMP:
+    return jumpInstruction("OP_JUMP", offset);
   case OP_RETURN:
     return simpleInstruction("OP_RETURN", offset);
+  case OP_TEST:
+    return simpleInstruction("OP_TEST", offset);
   case OP_NONE:
     return simpleInstruction("OP_NONE", offset);
   default:
@@ -94,6 +102,13 @@ int Debug::callInstruction(const std::string name, int offset) {
   uint32_t val = bytecode.opcode[offset + 1];
   std::cout << std::left << std::setw(18) << name << std::setw(4) << val
             << std::endl;
+  return offset + 2;
+}
+
+int Debug::jumpInstruction(const std::string name, int offset) {
+  uint32_t val = bytecode.opcode[offset + 1];
+  std::cout << std::left << std::setw(18) << name << std::setw(4) << ""
+            << "'goto:" << val << "'" << std::endl;
   return offset + 2;
 }
 

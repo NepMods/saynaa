@@ -1,6 +1,15 @@
-function main() {
-  print("hello\n");
-  return 07;
+function hello() {
+  print("hello function\n");
+  return 10;
 }
 
-print("outside main");
+function main() {
+
+  let x = hello();
+  if (x == 10) {
+    print("result true\n");
+  } else {
+    print("result false\n");
+  }
+  return 1;
+}
