@@ -147,7 +147,7 @@ void Generator::push_label() {
   current_label->str(""); // clear
 }
 
-void Generator::BinaryOP(u_int32_t type) {
+void Generator::BinaryOP(uint32_t type) {
   *assembly_body << "    ; begin BinaryOP\n";
 
   get_tmpValue("rbx");
