@@ -40,7 +40,7 @@ class Generator {
   void runtimeError(const std::string error);
   void push_label();
   auto checkVariable(std::string name, CodeContext *cCcontext = nullptr);
-  void BinaryOP(u_int32_t type);
+  void BinaryOP(uint32_t type);
 
   void store_Variable(const std::string &type, const std::string &val);
   void store_ptrAllVariable(int location);
