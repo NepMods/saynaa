@@ -131,44 +131,13 @@ void init_execute_module() {
 ---
 
 ## 🧩 How to Add a Custom Module
+```shell
 
-1. **Create a folder** under `custom_modules/`:
-
-```bash
-mkdir -p custom_modules/logger
-touch custom_modules/logger/module.cpp
+make module NAME=custom_module_name
 ```
 
-2. **Paste the module skeleton** into `module.cpp`:
 
-```cpp
-#include "../../modules.h"
-#include <cstdio>
-
-static int logger_run(CompilerContext *ctx)
-{
-    printf("[logger] Hello from Logger Module!\n");
-    return 0;
-}
-
-static CompilerModule logger_mod = {
-    .name = "Logger Module",
-    .priority = 2,
-    .run = logger_run,
-};
-
-__attribute__((constructor))
-void init_logger_module() {
-    register_module(&logger_mod);
-}
-```
-
-3. (Optional) Add a `DEPENDENCY` file listing other modules it relies on:
-
-```
-generator
-tokenizer
-```
+## Later you can add dependency to other module, change priority ad module.info file
 
 4. **Rebuild** the compiler:
 
