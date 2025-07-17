@@ -1,46 +1,46 @@
+# Compiler and flags
+CXX := g++
+CC := gcc
+CXXFLAGS := -std=c++20 -Wall -Wextra -g
+CFLAGS := -Wall -Wextra -g
 
-## PROGRAM NAME
-NAME = saynaa
+# Manual list of sources
+SRC_CPP := main.cpp \
+		   utils/utils.cpp \
+		   utils/debug.cpp
 
-## MODE can be DEBUG or RELEASE
-MODE = DEBUG
+SRC_C := modules/register.c
 
-CC        := g++
-CFLAGS    := -std=c++20
-LDFLAGS   := -lm
-OBJ_DIR   := build/
+# Automatically detect all .c and .cpp files inside custom_modules/
+CUSTOM_CPP := $(shell find custom_modules -name '*.cpp')
+CUSTOM_C := $(shell find custom_modules -name '*.c')
 
-SRC  = src/cli/        \
-       src/compiler/   \
-       src/generator/  \
-       src/shared/     \
-       src/utils/      \
+# Convert source lists to object files in build/ folder
+OBJ_CPP := $(patsubst %.cpp,build/%.o,$(SRC_CPP)) $(patsubst %.cpp,build/%.o,$(CUSTOM_CPP))
+OBJ_C := $(patsubst %.c,build/%.o,$(SRC_C)) $(patsubst %.c,build/%.o,$(CUSTOM_C))
 
-SRCS  := $(foreach DIR,$(SRC),$(wildcard $(DIR)*.cpp))
-OBJS  := $(addprefix $(OBJ_DIR), $(SRCS:.cpp=.o))
+# Final executable
+OUT := compiler
 
-ifeq ($(MODE),DEBUG)
-	CFLAGS += -DDEBUG -g3 -Og
-else
-	CFLAGS += -g -O3
-endif
+# Default target
+all: $(OUT)
 
-.PHONY: all clean
+# Link
+$(OUT): $(OBJ_CPP) $(OBJ_C)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(NAME): $(OBJS)
+# Compile C++ files
+build/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)%.o: %.cpp
+# Compile C files
+build/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-all: $(NAME)
-
-install:
-	@cp -r $(NAME) /usr/local/bin/
-	@printf "\033[38;5;52m\033[43m\t    installed!    \t\033[0m\n";
-
+# Clean
+.PHONY: clean
 clean:
-	rm -rf $(OBJ_DIR)
-	rm -f $(NAME)
+	rm -rf $(OUT) build/
+	find . -name '*.o' -delete

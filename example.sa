@@ -1,6 +1,6 @@
 function hello() {
   print("hello function\n");
-  return 10;
+  return 0;
 }
 
 function main() {
