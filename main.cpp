@@ -48,8 +48,8 @@ int main(int argc, char **argv) {
     std::sort(sorted_modules.begin(), sorted_modules.end(), [](CompilerModule* a, CompilerModule* b) {
         return a->priority < b->priority;
     });
-
-    for (auto &mod : sorted_modules) {
+    for (auto &mod : sorted_modules)
+    {
         std::cout << "Running module: " << mod->name << std::endl;
         if (mod->run(&ctx) != 0) {
             std::cerr << "Module '" << mod->name << "' failed.\n";
