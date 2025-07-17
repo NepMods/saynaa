@@ -352,6 +352,7 @@
  
  void Parser::function() {
    consume(TK_LPARAN, "Expect '(' after function name.");
+
    consume(TK_RPARAN, "Expect ')' after parameter.");
    consume(TK_LBRACE, "Expect '{' before function body.");
    blockBody();

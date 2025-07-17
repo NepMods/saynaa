@@ -335,6 +335,7 @@
                     << "]\n";
      if (iter == Ccontext->stackVar.end()) {
        // not found: variable not defined before
+       
        runtimeError("variable " + name + " not defined in " + Ccontext->name +
                     "!");
      }
@@ -345,6 +346,53 @@
    }
    case OP_GET_LOCAL: {
      std::string name = bytecode->name[next_op()];
+      if(name == "__system_tmpvalue_add") {
+        index++;
+        auto next_opcode = peek_op();
+        printf("next_opcode: %d\n", next_opcode);
+        auto value = bytecode->value[next_opcode];
+        int val  = std::get<int>(value);
+        index++;
+        total_tmpValue += val;
+        return INTERPRET_OK;
+      }
+     if(name == "asm") {
+
+       index++;
+      auto next_opcode = peek_op();
+      printf("next_opcode: %d\n", next_opcode);
+      auto flagStr = bytecode->value[next_opcode];
+      int flag = std::get<int>(flagStr);
+      index++;
+      index++;
+      next_opcode = peek_op();
+      printf("next_opcode: %d\n", next_opcode);
+      auto value = bytecode->value[next_opcode];
+
+      
+      if (std::holds_alternative<std::string>(value))
+      {
+        std::string asm_code = std::get<std::string>(value);
+        *assembly_body << asm_code << "\n";
+        
+        if(flag == 1) {
+
+          while(next_opcode != OP_END_FUNC) {
+            index++;
+            next_opcode = peek_op();
+          }
+        } else {
+          index++;
+        }
+        next_opcode = peek_op();
+        printf("next_opcode: %d\n", next_opcode);
+        return INTERPRET_OK;
+      }
+      else
+      {
+        runtimeError("Expect asm code after function asm");
+      }
+}
      if (peek_op() == OP_CALL) {
        index++; // OP_CALL
        index++; // How many parameters (now exists 0)
@@ -409,6 +457,7 @@
      *assembly_body << "    ; print\n";
      break;
    }
+
    case OP_BEG_FUNC: {
      std::stringstream *this_func = new std::stringstream();
      current_label_stack.push_back(this_func);

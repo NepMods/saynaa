@@ -43,6 +43,31 @@ function main() {
 // Output: Inside Main function
 ```
 
+
+## Inline Assembly
+
+```asm(1, "ASSEMBLY_CODE"); //for ignoring everyting after asm func```
+
+```asm(0, "ASSEMBLY_CODE"); //for keeping everyting after asm func```
+```js
+function value() {
+  let retVal = "HI\n";
+  __system_tmpvalue_add(1); // We are accessing a var in asm, that needs one extra temp stack to be increased
+  asm(1, "    mov rax, qword[allVariable]
+    mov rbx, qword[rax+0]
+    mov rax, rbx
+    mov rbx, qword[tmpValue]
+    mov qword[rbx+0], rax
+    mov rax, rbx");
+
+}
+
+print(value());
+// Output: HI
+```
+
+RETURNS A VALUE FROM ASM
+
 ---
 
 ## Code Format

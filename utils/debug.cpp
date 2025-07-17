@@ -1,5 +1,5 @@
 #include "debug.h"
-bool debug_enabled = false;
+bool debug_enabled = true;
 
 Debug::Debug(Bytecode value) : bytecode(value) {}
 
