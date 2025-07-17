@@ -1,8 +1,4 @@
-/*
- * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
- * Distributed Under The MIT License
- *
- */
+
 
  #ifndef saynaa_generator_h
  #define saynaa_generator_h

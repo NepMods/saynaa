@@ -1,0 +1,3 @@
+name     = generator
+priority = 2
+depends  = compiler

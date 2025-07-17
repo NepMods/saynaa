@@ -1,14 +1,5 @@
-
-/*
- * Copyright (c) 2023-2024 Mohammed Abdifatah. All rights reserved.
- * Distributed Under The MIT License
- *
- * src/genrator/generator.cpp:
- *   Contains final x86_64 Nasm code generator from phase opcode
- */
-
 #include "../../modules.h"
-#include "generator.h"
+#include <cstdio>
 
  #include "generator.h"
  #include "macros.h"
@@ -628,13 +619,15 @@ static int generator_run(CompilerContext *ctx)
     return 0;
 }
 
+// …but at link/compile time, MODULE_NAME and MODULE_PRIORITY
+// are injected from module.info via -D flags
 static CompilerModule generator_mod = {
-   .name = "Assembly Generator",
-   .priority = 2,
-   .run = generator_run,
+    .name     = MODULE_NAME,
+    .priority = MODULE_PRIORITY,
+    .run      = generator_run,
 };
 
 __attribute__((constructor))
 void init_generator_module() {
-   register_module(&generator_mod);
+    register_module(&generator_mod);
 }

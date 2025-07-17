@@ -1,0 +1,20 @@
+#include "../../modules.h"
+#include <cstdio>
+
+// you still use a normal C++ symbol for the run-function…
+static int __MODULE_NAME___run(CompilerContext *ctx) {
+    return 0;
+}
+
+// …but at link/compile time, MODULE_NAME and MODULE_PRIORITY
+// are injected from module.info via -D flags
+static CompilerModule __MODULE_NAME___mod = {
+    .name     = MODULE_NAME,
+    .priority = MODULE_PRIORITY,
+    .run      = __MODULE_NAME___run,
+};
+
+__attribute__((constructor))
+void init___MODULE_NAME___module() {
+    register_module(&__MODULE_NAME___mod);
+}

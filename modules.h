@@ -26,3 +26,11 @@ CompilerModule **get_registered_modules();
 #ifdef __cplusplus
 }
 #endif
+
+#ifndef MODULE_NAME
+#define MODULE_NAME "dummy_module"
+#endif
+
+#ifndef MODULE_PRIORITY
+#define MODULE_PRIORITY 0
+#endif

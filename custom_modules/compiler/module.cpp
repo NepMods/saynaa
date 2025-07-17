@@ -1,6 +1,6 @@
 #include "../../modules.h"
-#include "stdio.h"
-#include "string"
+#include <cstdio>
+
 #include "exports.h"
 
  #include <cstdio>
@@ -431,6 +431,8 @@
    return hadError;
  }
 
+
+
  static Bytecode *bytecode;
  static int compiler_run(CompilerContext *ctx)
  {
@@ -455,10 +457,12 @@
      return 0;
  }
 
+// …but at link/compile time, MODULE_NAME and MODULE_PRIORITY
+// are injected from module.info via -D flags
 static CompilerModule compiler_mod = {
-    .name = "Compiler",
-    .priority = 1,
-    .run = compiler_run,
+    .name     = MODULE_NAME,
+    .priority = MODULE_PRIORITY,
+    .run      = compiler_run,
 };
 
 __attribute__((constructor))

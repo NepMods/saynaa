@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-static int execute_run(CompilerContext *ctx)
+static int executor_run(CompilerContext *ctx)
 {
     printf("[execute] running...\n");
 
@@ -17,13 +17,15 @@ static int execute_run(CompilerContext *ctx)
     return 0;
 }
 
-static CompilerModule execute_mod = {
-   .name = "Execuatable generator",
-   .priority = 3,
-   .run = execute_run,
+// …but at link/compile time, MODULE_NAME and MODULE_PRIORITY
+// are injected from module.info via -D flags
+static CompilerModule executor_mod = {
+    .name     = MODULE_NAME,
+    .priority = MODULE_PRIORITY,
+    .run      = executor_run,
 };
 
 __attribute__((constructor))
-void init_execute_module() {
-   register_module(&execute_mod);
+void init_executor_module() {
+    register_module(&executor_mod);
 }
