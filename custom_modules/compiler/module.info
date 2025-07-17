@@ -1,0 +1,3 @@
+name     = compiler
+priority = 1
+depends  = tokenizer
