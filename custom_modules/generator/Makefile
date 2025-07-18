@@ -18,11 +18,9 @@ all: $(OUT)
 $(OUT): $(OBJS)
 	@ar rcs $@ $^
 
-# 3) Compile .cpp into build/*.o
 build/%.o: %.cpp
-	@mkdir -p build/ # Changed to directly create 'build/' directory
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-
 .PHONY: clean
 clean:
 	@rm -rf build/*.o $(OUT)
