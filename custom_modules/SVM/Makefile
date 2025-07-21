@@ -21,6 +21,7 @@ $(OUT): $(OBJS)
 build/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 .PHONY: clean
 clean:
 	@rm -rf build/*.o $(OUT)

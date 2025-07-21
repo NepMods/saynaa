@@ -1,14 +1,35 @@
-#include "../../modules.h"
-#include <cstdio>
+//
+// Created by arjun on 7/20/25.
+//
 
-#include "exports.h"
+#include "Tokenizer.h"
 
-void Scanner::put(const std::string &source) {
-    start = source.c_str();
-    current = source.c_str();
+Tokenizer::Tokenizer(std::string& source)
+{
+  start = source.c_str();
+  current = start;
+}
+
+void Tokenizer::scan(Token** ret_token)
+{
+  Token* token_list = nullptr;
+  size_t count = 0;
+
+  Token current_token = scanToken();
+  while (current_token.type != TK_EOF)
+  {
+    token_list = (Token*)realloc(token_list, (count + 1) * sizeof(Token));
+    token_list[count++] = current_token;
+    current_token = scanToken();
   }
-  
-  Token Scanner::scanToken() {
+  token_list = (Token*)realloc(token_list, (count + 1) * sizeof(Token));
+  token_list[count++] = current_token;
+
+  *ret_token = token_list;
+}
+
+
+Token Tokenizer::scanToken() {
     skipWhitespace();
     start = current;
   
@@ -20,7 +41,6 @@ void Scanner::put(const std::string &source) {
       return identifier();
     if (isDigit(c))
       return number();
-  
     switch (c) {
     case '(':
       return makeToken(TK_LPARAN);
@@ -52,6 +72,8 @@ void Scanner::put(const std::string &source) {
       return makeToken(match('=') ? TK_LTEQ : TK_LT);
     case '>':
       return makeToken(match('=') ? TK_GTEQ : TK_GT);
+    case '`':
+      return multi_string();
     case '"':
       return string();
     }
@@ -61,7 +83,7 @@ void Scanner::put(const std::string &source) {
     return errorToken(error_message.c_str());
   }
   
-  Token Scanner::string() {
+  Token Tokenizer::string() {
     while (peek() != '"' && !isAtEnd()) {
       if (peek() == '\n')
         line++;
@@ -75,16 +97,29 @@ void Scanner::put(const std::string &source) {
     advance();
     return makeToken(TK_STRING);
   }
+  Token Tokenizer::multi_string() {
+    while (peek() != '`' && !isAtEnd()) {
+      if (peek() == '\n')
+        line++;
+      advance();
+    }
+
+    if (isAtEnd())
+      return errorToken("Unterminated string.");
+
+    // The closing quote.
+    advance();
+    return makeToken(TK_STRING);
+  }
+
+  bool Tokenizer::isAtEnd() { return *current == '\0'; }
   
-  bool Scanner::isAtEnd() { return *current == '\0'; }
-  
-  Token Scanner::number() {
+  Token Tokenizer::number() {
     while (isDigit(peek()))
       advance();
   
     // Look for a fractional part.
     if (peek() == '.' && isDigit(peekNext())) {
-      // Consume the ".".
       advance();
   
       while (isDigit(peek()))
@@ -94,7 +129,7 @@ void Scanner::put(const std::string &source) {
     return makeToken(TK_NUMBER);
   }
   
-  Token Scanner::identifier() {
+  Token Tokenizer::identifier() {
     while (isAlpha(peek()) || isDigit(peek()))
       advance();
   
@@ -113,20 +148,20 @@ void Scanner::put(const std::string &source) {
     return makeToken(type);
   }
   
-  bool Scanner::isAlpha(char c) {
+  bool Tokenizer::isAlpha(char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
   }
   
-  bool Scanner::isDigit(char c) { return c >= '0' && c <= '9'; }
+  bool Tokenizer::isDigit(char c) { return c >= '0' && c <= '9'; }
   
-  char Scanner::advance() {
+  char Tokenizer::advance() {
     current++;
     return current[-1];
   }
   
-  char Scanner::peek() { return *current; }
+  char Tokenizer::peek() { return *current; }
   
-  void Scanner::skipWhitespace() {
+  void Tokenizer::skipWhitespace() {
     for (;;) {
       char c = peek();
       switch (c) {
@@ -154,13 +189,13 @@ void Scanner::put(const std::string &source) {
     }
   }
   
-  char Scanner::peekNext() {
+  char Tokenizer::peekNext() {
     if (isAtEnd())
       return '\0';
     return current[1];
   }
   
-  bool Scanner::match(char expected) {
+  bool Tokenizer::match(char expected) {
     if (isAtEnd())
       return false;
     if (*current != expected)
@@ -169,7 +204,7 @@ void Scanner::put(const std::string &source) {
     return true;
   }
   
-  Token Scanner::makeToken(TokenType type) {
+  Token Tokenizer::makeToken(TokenType type) {
     Token token;
     token.type = type;
     token.start = start;
@@ -178,7 +213,7 @@ void Scanner::put(const std::string &source) {
     return token;
   }
   
-  Token Scanner::errorToken(const char *message) {
+  Token Tokenizer::errorToken(const char *message) {
     Token token;
     token.type = TK_ERROR;
     token.start = message;
@@ -188,35 +223,3 @@ void Scanner::put(const std::string &source) {
   }
  
  
-
-  static int tokenizer_run(CompilerContext *ctx) {
-    printf("[tokenizer] running...\n");
-    std::string* source_ptr = static_cast<std::string*>(ctx->source);
-    if (!source_ptr) {
-        fprintf(stderr, "[tokenizer] Error: Input is null.\n");
-        return 1;
-    }
-
-    std::string& source = *source_ptr;
-
-    ctx->output = new Scanner();
-    auto scanner = (Scanner *)ctx->output;
-    scanner->put(source);
-
-    //print output 
-    printf("[tokenizer] output: %p\n", ctx->output);
-    printf("[tokenizer] finished.\n");
-    return 0;
-}
-// …but at link/compile time, MODULE_NAME and MODULE_PRIORITY
-// are injected from module.info via -D flags
-static CompilerModule tokenizer_mod = {
-    .name     = MODULE_NAME,
-    .priority = MODULE_PRIORITY,
-    .run      = tokenizer_run,
-};
-
-__attribute__((constructor))
-void init_tokenizer_module() {
-    register_module(&tokenizer_mod);
-}

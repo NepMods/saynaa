@@ -34,7 +34,6 @@
    OP_BEG_FUNC,
    OP_END_FUNC,
    OP_CALL,
-   OP_PRINT,
    OP_JUMP,
    OP_JUMP_IF_NOT,
    OP_JUMP_HERE,
@@ -48,9 +47,7 @@
    std::vector<std::variant<int, std::string>> value; // value can be str, int
    std::vector<int> lines;                            // line number of opcode
    std::vector<uint32_t> opcode;
- 
-   void free() {
-   }
+
  } Bytecode;
  
  typedef struct {

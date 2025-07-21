@@ -1,0 +1,24 @@
+# Bytecode dump (.smali-like)
+
+.code
+    0: OP_BEG_FUNC (19)   # line 1 0 (main)
+    2: OP_GET_LOCAL (7)   # line 2 1 (asm)
+    4: OP_CONSTANT (0)   # line 2 0 (0)
+    6: OP_CONSTANT (0)   # line 4 1 ("mov rbx, 20
+            mov rcx, 30
+            add rbx, rcx")
+    8: OP_CALL (21)   # line 4 2
+    10: OP_POP (4)   # line 4
+    11: OP_GET_LOCAL (7)   # line 5 2 (__temp__)
+    13: OP_RETURN (25)   # line 5
+    14: OP_END_FUNC (20)   # line 6
+.constants
+    const 0: 0
+    const 1: "mov rbx, 20
+            mov rcx, 30
+            add rbx, rcx"
+
+.names
+    name 0: main
+    name 1: asm
+    name 2: __temp__

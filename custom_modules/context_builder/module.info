@@ -1,3 +1,0 @@
-name     = context_builder
-priority = 2
-depends  = compiler

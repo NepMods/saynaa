@@ -11,7 +11,6 @@ void Debug::disassemble(const std::string name) {
     offset = disassembleInstruction(offset);
   }
 
-  bytecode.free();
 
   if (debug_enabled)
     std::cout << "== " << name << " ==" << std::endl;
@@ -69,8 +68,6 @@ int Debug::disassembleInstruction(int offset) {
       return simpleInstruction("OP_NOT", offset);
     case OP_NEGATE:
       return simpleInstruction("OP_NEGATE", offset);
-    case OP_PRINT:
-      return simpleInstruction("OP_PRINT", offset);
     case OP_BEG_FUNC:
       return constantInstructionName("OP_BEG_FUNC", offset);
     case OP_END_FUNC:
