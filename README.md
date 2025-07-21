@@ -9,13 +9,12 @@ Welcome to **Saynaa** – a programming language written in C++ from scratch.
 ## Code Example
 
 ```js
-let str = "result: ";
-let x = 10;
-let y = 20;
-let z = x*y;
-
-print(str);
-print(z);
+function getRet() {
+    return 11;
+}
+function main() {
+    return getRet();
+}
 ```
 
 ## Functions
