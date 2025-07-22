@@ -27,23 +27,51 @@ function main() {
 ## Functions
 
 ```js
-let OK = 0;
-let ERROR = 1;
+function print_int(val) {
+  asm(0, `; allocate 32 bytes on stack for buffer (enough for 20 digits + newline)
+                sub rsp, 32
+                lea rsi, [rsp + 31]    ; point to end of buffer
+                mov byte [rsi], 10     ; newline
+                dec rsi
 
-function TestFunction() {
-    return 8;
+                mov rax, rdi           ; value to convert
+                mov rcx, 10
+
+            .convert_loop:
+                xor rdx, rdx
+                div rcx                ; divide rax by 10 -> quotient in rax, remainder in rdx
+                add dl, '0'
+                mov [rsi], dl
+                dec rsi
+                test rax, rax
+                jnz .convert_loop
+
+                inc rsi                ; point to first digit
+
+                ; write syscall
+                mov rax, 1             ; syscall: write
+                mov rdi, 1             ; stdout
+                mov rdx, rsp
+                lea rdx, [rsp + 32]    ; end of stack buffer
+                sub rdx, rsi           ; length = end - start
+                mov rsi, rsi           ; buffer pointer is already in rsi
+                syscall
+
+                ; restore stack
+                add rsp, 32`);
 }
 
-print(TestFunction());
-return OK;
+function main() {
+  return print_int(3000);
+}
 ```
 
 ## Main Function
 
 ```js
 function main() {
-    print("Inside Main function");
-    return 0; 
+  print("Inside Main function");
+  return 0;
 }
 
 // Output: Inside Main function
@@ -60,11 +88,11 @@ function value() {
   let retVal = "HI\n";
   __system_tmpvalue_add(1); // We are accessing a var in asm, that needs one extra temp stack to be increased
   asm(1, "    mov rax, qword[allVariable]
-    mov rbx, qword[rax+0]
-    mov rax, rbx
-    mov rbx, qword[tmpValue]
-    mov qword[rbx+0], rax
-    mov rax, rbx");
+  mov rbx, qword[rax+0]
+  mov rax, rbx
+  mov rbx, qword[tmpValue]
+  mov qword[rbx+0], rax
+  mov rax, rbx");
 
 }
 
