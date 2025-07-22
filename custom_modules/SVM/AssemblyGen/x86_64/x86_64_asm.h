@@ -36,17 +36,25 @@ public:
     bool finalized = false;
     int current_base_pointer = 0;
     std::vector<x86_64_variable> variables;
+
+    int parameter_size = 0;
+    std::vector<x86_64_variable> parameters;
+    int required_parameters = 0;
+    bool is_param_vargs = false;
+
     void initialize(std::string name);
     void finalize();
     void runtimeError(std::string text);
 
-    void asm_call(std::string name);
+    void asm_call(std::string name, int param_size, std::vector<x86_64_symbol> list_symbols);
     void asm_raw_line(std::string data);
     void asm_syscall(int syscall);
     void return_raw(std::string data);
     void add_temp_var(std::string value);
     void push_variable(std::string name, bool isMain);
     void get_variable(std::string name, std::vector<x86_64_variable> &g_variables, bool isMain);
+    void add_parameter(std::string name, std::string def_value);
+    void push_call_parameter(std::string value, int size);
     std::string get_text();
 
 

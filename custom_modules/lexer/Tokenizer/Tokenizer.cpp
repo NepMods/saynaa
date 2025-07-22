@@ -4,6 +4,8 @@
 
 #include "Tokenizer.h"
 
+#include <cstring>
+
 Tokenizer::Tokenizer(std::string& source)
 {
   start = source.c_str();

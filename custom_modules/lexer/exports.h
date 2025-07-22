@@ -99,5 +99,5 @@ typedef enum {
     PREC_PRIMARY
   } Precedence;
 
-
+std::string opcodeToName(uint32_t opcode);
 #endif //EXPORTS_H

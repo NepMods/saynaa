@@ -4,6 +4,7 @@
 
 #include "AssemblyGen.h"
 
+#include "../../lexer/exports.h"
 #include "x86_64/x86_64_asm.h"
 
 AssemblyGen::AssemblyGen(Bytecode bytecode)
@@ -29,6 +30,9 @@ uint32_t AssemblyGen::peek_bytecode(int offset)
 
 uint32_t AssemblyGen::next_bytecode()
 {
+
+    printf("current bytecode: index: %d, %s to %s\n", index, opcodeToName(peek_bytecode(-1)).c_str(), opcodeToName(peek_bytecode(0)).c_str());
+
     index++;
     return get_bytecode();
 }
@@ -51,7 +55,6 @@ void AssemblyGen::next()
 {
     int current_bytecode = get_bytecode();
 
-    printf("current bytecode: %d\n", current_bytecode);
     switch (current_bytecode)
     {
     case OP_BEG_FUNC:
@@ -118,11 +121,29 @@ void AssemblyGen::next()
                 parse_asm_fun();
                 return;;
             }
-            if (peek_bytecode(1) == OP_CALL)
+            if (peek_bytecode(1) == OP_CALL || peek_bytecode(1) == OP_CONSTANT || peek_bytecode(1) == OP_GET_LOCAL)
             {
+                int param_size = 0;
+                while (next_bytecode() != OP_CALL)
+                {
+                    if (get_bytecode() == OP_CONSTANT)
+                    {
+                        auto value = bytecode.value[peek_bytecode(1)];
+                        std::string val = std::holds_alternative<std::string>(value) ? std::get<std::string>(value): std::to_string(std::get<int>(value));
+                        x86_64.current_context->push_call_parameter(val, param_size);
+                        next_bytecode();
+                    } else if (get_bytecode() == OP_GET_LOCAL)
+                    {
+
+                        std::string name_of = bytecode.name.at(next_bytecode());
+                        x86_64.current_context->get_variable(name_of, x86_64.global_variables, x86_64.isMain);
+                        x86_64.current_context->push_call_parameter("rbx", param_size);
+                        // next_bytecode();
+                    }
+                    param_size++;
+                }
                 next_bytecode();
-                next_bytecode();
-                x86_64.current_context->asm_call(name);
+                x86_64.current_context->asm_call(name, param_size, x86_64.symbols);
             }
             else
             {
@@ -140,7 +161,14 @@ void AssemblyGen::next()
     case OP_POP:
         next_bytecode();
         break;
+    case OP_DEF_PARAM:
+        auto name = bytecode.name.at(next_bytecode());
+        x86_64.current_context->add_parameter(name, "0");
+        next_bytecode();
+        break;
+
     }
+
 
 }
 
@@ -150,13 +178,12 @@ bool AssemblyGen::skip_to(uint32_t bytecode)
     {
         index++;
     }
-    index++;
     return true;
 }
 
 void AssemblyGen::parse_asm_fun()
 {
-    index++;
+    next_bytecode();
     auto flagVal = bytecode.value[peek_bytecode(1)];
     int flag = 0;
     if (!std::holds_alternative<int>(flagVal))
@@ -165,9 +192,8 @@ void AssemblyGen::parse_asm_fun()
     }
     flag = std::get<int>(flagVal);
 
-    index++;
-    index++;
-
+    next_bytecode();
+    next_bytecode();
     auto value = bytecode.value[peek_bytecode(1)];
 
 
@@ -178,8 +204,11 @@ void AssemblyGen::parse_asm_fun()
     {
         x86_64.current_context->finalized = true;
     }
+
     skip_to(OP_TRUE);
-    return;
+    next_bytecode();
+    next_bytecode();
+    next_bytecode();
 
 }
 

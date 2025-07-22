@@ -31,6 +31,7 @@
    OP_NOT,
    OP_NEGATE,
    OP_PARAM,
+   OP_DEF_PARAM,
    OP_BEG_FUNC,
    OP_END_FUNC,
    OP_CALL,

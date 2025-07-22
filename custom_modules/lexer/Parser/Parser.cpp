@@ -356,6 +356,15 @@ void Parser::functionDeclaration() {
 
 void Parser::function() {
     consume(TK_LPARAN, "Expect '(' after function name.");
+    while (!check(TK_RPARAN))
+    {
+        auto name = parseVariable("A name is expected.");
+        emitBytes(OP_DEF_PARAM, name);
+        if (!(check(TK_RPARAN)))
+        {
+            consume(TK_COMMA, "Expect ',' after function name.");
+        }
+    }
 
     consume(TK_RPARAN, "Expect ')' after parameter.");
     consume(TK_LBRACE, "Expect '{' before function body.");

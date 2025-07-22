@@ -13,6 +13,7 @@ static int SVM_run(CompilerContext *ctx) {
     bytecode = *code;
     AssemblyGen gen(bytecode);
     gen.generateAssembly();
+
     return 0;
 }
 

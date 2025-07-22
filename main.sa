@@ -1,6 +1,13 @@
-function main() {
-    asm(0, `mov rbx, 20
-            mov rcx, 30
-            add rbx, rcx`);
+let addWithFive = 5;
+
+function sum(a, b) {
+    asm(0, `
+        mov rbx, rdi
+        add rbx, rsi
+    `);
     return __temp__;
+}
+
+function main() {
+    return sum(addWithFive, 30);
 }

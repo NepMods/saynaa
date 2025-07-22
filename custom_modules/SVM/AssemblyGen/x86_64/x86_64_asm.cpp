@@ -7,6 +7,8 @@
 #include <fstream>
 #include <iostream>
 
+static const char* param_regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 void x86_64_symbol::add_text(std::string text, int indent)
 {
 
@@ -46,10 +48,26 @@ void x86_64_symbol::finalize()
     add_text("ret", 1);
     finalized = true;
 }
-void x86_64_symbol::asm_call(std::string name)
+void x86_64_symbol::asm_call(std::string name, int param_size, std::vector<x86_64_symbol> list_symbols)
 {
-    add_text("call " + name, 1);
-    add_text("mov rbx, rax", 1);
+    bool found = false;
+    for (auto symbol : list_symbols)
+    {
+        if (symbol.name == name && symbol.parameter_size == param_size)
+        {
+            found = true;
+            add_text("call " + name, 1);
+            add_text("mov rbx, rax", 1);
+            if (param_size > 6)
+            {
+                add_text("add rsp, "+ std::to_string((param_size - 6) * 8), 1);
+            }
+        }
+    }
+    if (!found)
+    {
+        runtimeError("Cant find function named " + name + " with parameter size "+ std::to_string(param_size));
+    }
 }
 void x86_64_symbol::asm_raw_line(std::string data)
 {
@@ -78,7 +96,7 @@ void x86_64_symbol::push_variable(std::string name, bool isMain)
     variable.type = NUMBER;
     variable.base_pointer = --current_base_pointer;
 
-    if ((!isMain && name == "main"))
+    if ((!isMain && name == "main") || (name != "main"))
     {
         add_text("mov qword [rbp+"+std::to_string(variable.base_pointer * 8)+"], rbx", 1);
     }
@@ -91,13 +109,34 @@ void x86_64_symbol::runtimeError(std::string text)
         std::cerr << text << std::endl;
         exit(1);
 }
+void x86_64_symbol::add_parameter(std::string name, std::string def_value)
+{
+    x86_64_variable thisParam;
+    thisParam.name = name;
+    thisParam.base_pointer = (parameter_size);
+    thisParam.type = NUMBER;
+    parameters.push_back(thisParam);
+    parameter_size++;
+}
+
+void x86_64_symbol::push_call_parameter(std::string value, int size)
+{
+    if (size < 6)
+    {
+        add_text("mov " + std::string(param_regs[size]) + ", " + value, 1);
+    }
+    else
+    {
+        add_text("mov rbx, " + value, 1);
+        add_text("push rbx", 1);
+    }
+}
 
 void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> &g_variables, bool isMain)
 {
     bool found = false;
     x86_64_variable variable;
-    if (isMain)
-    {
+
         for (auto var : variables)
         {
             if (var.name == name)
@@ -106,15 +145,36 @@ void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> 
                 variable = var;
             }
         }
-    }
+
     if (!found)
     {
-        for (auto var : isMain ?g_variables : variables )
+        for (auto var : (!isMain && this->name == "main") ? variables : g_variables )
         {
             printf("%s", var.name.c_str());
             if (var.name == name)
             {
+
                 add_text("mov rbx, [rel "+var.name+"]", 1);
+                return;
+            }
+        }
+    }
+    if (!found)
+    {
+        for (auto var : parameters)
+        {
+            if (var.name == name)
+            {
+                printf("bp: %d", var.base_pointer);
+                if (var.base_pointer < 6)
+                {
+                    add_text("mov rbx, "+std::string(param_regs[var.base_pointer])+"", 1);
+                } else
+                {
+                    int position = (parameter_size) - var.base_pointer;
+                    add_text("mov rbx, [rbp + "+std::to_string((position + 1) * 8)+"]", 1);
+                }
+
                 return;
             }
         }
@@ -127,6 +187,8 @@ void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> 
     add_text("mov rbx, [rbp+"+std::to_string(variable.base_pointer * 8)+"]", 1);
 
 }
+
+
 std::string x86_64_symbol::get_text()
 {
     return text_top + text_bottom;
@@ -139,7 +201,8 @@ void x86_64_asm::initialize()
     add_data("section .data");
     global_symbol.initialize("_start");
     global_symbol.exported = true;
-    global_symbol.asm_call("main");
+    global_symbol.asm_raw_line("call main");
+    global_symbol.asm_raw_line("mov rbx, rax");
     global_symbol.asm_raw_line("mov rdi, rbx");
     global_symbol.asm_syscall(60); // We dont need to finalize because its directly exiting
 
@@ -151,11 +214,15 @@ void x86_64_asm::initialize()
 
 void x86_64_asm::create_and_select_context(std::string name)
 {
+
     if (name == "main")
     {
         this->global_variables = main_symbol.variables;
         isMain = true;
-
+    }
+    if (!isMain)
+    {
+        this->global_variables = main_symbol.variables;
     }
     x86_64_symbol current_contex;
     current_contex.initialize(name);

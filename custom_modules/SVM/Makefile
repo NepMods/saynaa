@@ -5,7 +5,7 @@ MODULE_NAME     := $(shell grep '^name'     module.info | cut -d= -f2 | xargs)
 MODULE_PRIORITY := $(shell grep '^priority' module.info | cut -d= -f2 | xargs)
 
 CXX      := g++
-CXXFLAGS := -std=c++20 -Wall -Wextra -g -fPIC -DMODULE_NAME="\"$(MODULE_NAME)\"" -DMODULE_PRIORITY=$(MODULE_PRIORITY)
+CXXFLAGS := -std=c++20 -Wall -Wextra -g -fPIC -I../../ -DMODULE_NAME="\"$(MODULE_NAME)\"" -DMODULE_PRIORITY=$(MODULE_PRIORITY)
 
 # 2) Discover all .cpp files recursively
 SRCS := $(shell find . -name '*.cpp')

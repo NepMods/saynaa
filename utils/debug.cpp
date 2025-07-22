@@ -84,6 +84,9 @@ int Debug::disassembleInstruction(int offset) {
       return simpleInstruction("OP_TEST", offset);
     case OP_NONE:
       return simpleInstruction("OP_NONE", offset);
+  case OP_DEF_PARAM:
+    return constantInstructionName("OP_DEF_PARAM", offset);
+
     default:
       if (debug_enabled)
         std::cout << "Unknown opcode " << instruction << std::endl;

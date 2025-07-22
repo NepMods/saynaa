@@ -37,6 +37,7 @@ std::string opcodeToName(uint32_t opcode) {
     case OP_JUMP_IF_NOT:  return "OP_JUMP_IF_NOT";
     case OP_JUMP:         return "OP_JUMP";
     case OP_RETURN:       return "OP_RETURN";
+    case OP_DEF_PARAM: return "OP_DEF_PARAM";
     case OP_TEST:         return "OP_TEST";
     case OP_NONE:         return "OP_NONE";
     default:
@@ -66,7 +67,7 @@ void saveBytecodeToSmaliFile(const Bytecode &bytecode, const std::string &filena
         if (line > 0) out << "   # line " << line;
 
         // Example: opcodes with 1 operand:
-        if (op == OP_CONSTANT || op == OP_DEFINE_LOCAL || op == OP_GET_LOCAL || op == OP_SET_LOCAL || op == OP_CALL || op == OP_BEG_FUNC) {
+        if (op == OP_CONSTANT || op == OP_DEFINE_LOCAL || op == OP_GET_LOCAL || op == OP_SET_LOCAL || op == OP_CALL || op == OP_BEG_FUNC || op == OP_DEF_PARAM) {
             if (i + 1 < bytecode.opcode.size()) {
                 uint32_t operand = bytecode.opcode[i + 1];
                 out << " " << operand;

@@ -1,24 +1,45 @@
 # Bytecode dump (.smali-like)
 
 .code
-    0: OP_BEG_FUNC (19)   # line 1 0 (main)
-    2: OP_GET_LOCAL (7)   # line 2 1 (asm)
-    4: OP_CONSTANT (0)   # line 2 0 (0)
-    6: OP_CONSTANT (0)   # line 4 1 ("mov rbx, 20
-            mov rcx, 30
-            add rbx, rcx")
-    8: OP_CALL (21)   # line 4 2
-    10: OP_POP (4)   # line 4
-    11: OP_GET_LOCAL (7)   # line 5 2 (__temp__)
-    13: OP_RETURN (25)   # line 5
-    14: OP_END_FUNC (20)   # line 6
+    0: OP_CONSTANT (0)   # line 1 0 (5)
+    2: OP_DEFINE_LOCAL (5)   # line 1 0 (addWithFive)
+    4: OP_BEG_FUNC (20)   # line 3 1 (sum)
+    6: OP_DEF_PARAM (19)   # line 3 2
+    8: OP_DEF_PARAM (19)   # line 3 3
+    10: OP_GET_LOCAL (7)   # line 4 4 (asm)
+    12: OP_CONSTANT (0)   # line 4 1 (0)
+    14: OP_CONSTANT (0)   # line 7 2 ("
+        mov rbx, rdi
+        add rbx, rsi
+    ")
+    16: OP_CALL (22)   # line 7 2
+    18: OP_POP (4)   # line 7
+    19: OP_GET_LOCAL (7)   # line 8 5 (__temp__)
+    21: OP_RETURN (26)   # line 8
+    22: OP_END_FUNC (21)   # line 9
+    23: OP_BEG_FUNC (20)   # line 11 6 (main)
+    25: OP_GET_LOCAL (7)   # line 12 7 (sum)
+    27: OP_GET_LOCAL (7)   # line 12 8 (addWithFive)
+    29: OP_CONSTANT (0)   # line 12 3 (30)
+    31: OP_CALL (22)   # line 12 2
+    33: OP_RETURN (26)   # line 12
+    34: OP_END_FUNC (21)   # line 13
 .constants
-    const 0: 0
-    const 1: "mov rbx, 20
-            mov rcx, 30
-            add rbx, rcx"
+    const 0: 5
+    const 1: 0
+    const 2: "
+        mov rbx, rdi
+        add rbx, rsi
+    "
+    const 3: 30
 
 .names
-    name 0: main
-    name 1: asm
-    name 2: __temp__
+    name 0: addWithFive
+    name 1: sum
+    name 2: a
+    name 3: b
+    name 4: asm
+    name 5: __temp__
+    name 6: main
+    name 7: sum
+    name 8: addWithFive
