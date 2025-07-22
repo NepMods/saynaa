@@ -9,11 +9,18 @@ Welcome to **Saynaa** – a programming language written in C++ from scratch.
 ## Code Example
 
 ```js
-function getRet() {
-    return 11;
+let addWithFive = 5;
+
+function sum(a, b) {
+  asm(0, `
+        mov rbx, rdi
+        add rbx, rsi
+    `);
+  return __temp__;
 }
+
 function main() {
-    return getRet();
+  return sum(addWithFive, 30);
 }
 ```
 
