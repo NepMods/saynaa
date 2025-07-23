@@ -131,6 +131,61 @@ void x86_64_symbol::push_call_parameter(std::string value, int size)
         add_text("push rbx", 1);
     }
 }
+void x86_64_symbol::set_variable(std::string name, std::string value, std::vector<x86_64_variable> &g_variables, bool isMain)
+{
+    bool found = false;
+    x86_64_variable variable;
+
+    for (auto var : variables)
+    {
+        if (var.name == name)
+        {
+            found = true;
+            variable = var;
+        }
+    }
+
+    if (!found)
+    {
+        for (auto var : (!isMain && this->name == "main") ? variables : g_variables )
+        {
+            printf("%s", var.name.c_str());
+            if (var.name == name)
+            {
+
+                add_text("mov [rel "+var.name+"], rbx", 1);
+                return;
+            }
+        }
+    }
+    if (!found)
+    {
+        for (auto var : parameters)
+        {
+            if (var.name == name)
+            {
+                printf("bp: %d", var.base_pointer);
+                if (var.base_pointer < 6)
+                {
+                    add_text("mov "+std::string(param_regs[var.base_pointer])+", rbx", 1);
+                } else
+                {
+                    int position = (parameter_size) - var.base_pointer;
+                    add_text("mov [rbp + "+std::to_string((position + 1) * 8)+"], rbx", 1);
+                }
+
+                return;
+            }
+        }
+    }
+    if (!found)
+    {
+        runtimeError("Variable "+name+" cant be found at symbol "+this->name);
+    }
+
+    add_text("mov  [rbp+"+std::to_string(variable.base_pointer * 8)+"], rbx", 1);
+
+}
 
 void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> &g_variables, bool isMain)
 {

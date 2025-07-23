@@ -55,6 +55,7 @@ public:
     void get_variable(std::string name, std::vector<x86_64_variable> &g_variables, bool isMain);
     void add_parameter(std::string name, std::string def_value);
     void push_call_parameter(std::string value, int size);
+    void set_variable(std::string name, std::string value, std::vector<x86_64_variable> &g_variables, bool isMain);
     std::string get_text();
 
 

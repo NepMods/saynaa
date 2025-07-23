@@ -69,6 +69,7 @@ void AssemblyGen::next()
     case OP_CONSTANT:
         {
             auto value = bytecode.value[next_bytecode()];
+
             std::string val = std::holds_alternative<std::string>(value) ? std::get<std::string>(value): std::to_string(std::get<int>(value));
             if (!x86_64.isMain && x86_64.current_context->name == "main")
             {
@@ -82,6 +83,7 @@ void AssemblyGen::next()
                     return;
                 }
             }
+
             x86_64.current_context->add_temp_var(val);
             next_bytecode();
         }
@@ -109,6 +111,13 @@ void AssemblyGen::next()
         {
             std::string name = bytecode.name.at(next_bytecode());
             x86_64.current_context->push_variable(name, x86_64.isMain);
+            next_bytecode();
+        }
+        break;
+    case OP_SET_LOCAL:
+        {
+            std::string name = bytecode.name.at(next_bytecode());
+            x86_64.current_context->set_variable(name, "0", x86_64.global_variables, x86_64.isMain);
             next_bytecode();
         }
         break;
@@ -166,7 +175,6 @@ void AssemblyGen::next()
         x86_64.current_context->add_parameter(name, "0");
         next_bytecode();
         break;
-
     }
 
 

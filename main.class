@@ -1,45 +1,111 @@
 # Bytecode dump (.smali-like)
 
 .code
-    0: OP_CONSTANT (0)   # line 1 0 (5)
-    2: OP_DEFINE_LOCAL (5)   # line 1 0 (addWithFive)
-    4: OP_BEG_FUNC (20)   # line 3 1 (sum)
+    0: OP_CONSTANT (0)   # line 2 0 (20)
+    2: OP_DEFINE_LOCAL (5)   # line 2 0 (a)
+    4: OP_BEG_FUNC (20)   # line 3 1 (print_int)
     6: OP_DEF_PARAM (19)   # line 3 2
-    8: OP_DEF_PARAM (19)   # line 3 3
-    10: OP_GET_LOCAL (7)   # line 4 4 (asm)
-    12: OP_CONSTANT (0)   # line 4 1 (0)
-    14: OP_CONSTANT (0)   # line 7 2 ("
-        mov rbx, rdi
-        add rbx, rsi
-    ")
-    16: OP_CALL (22)   # line 7 2
-    18: OP_POP (4)   # line 7
-    19: OP_GET_LOCAL (7)   # line 8 5 (__temp__)
-    21: OP_RETURN (26)   # line 8
-    22: OP_END_FUNC (21)   # line 9
-    23: OP_BEG_FUNC (20)   # line 11 6 (main)
-    25: OP_GET_LOCAL (7)   # line 12 7 (sum)
-    27: OP_GET_LOCAL (7)   # line 12 8 (addWithFive)
-    29: OP_CONSTANT (0)   # line 12 3 (30)
-    31: OP_CALL (22)   # line 12 2
-    33: OP_RETURN (26)   # line 12
-    34: OP_END_FUNC (21)   # line 13
+    8: OP_GET_LOCAL (7)   # line 4 3 (asm)
+    10: OP_CONSTANT (0)   # line 4 1 (0)
+    12: OP_CONSTANT (0)   # line 34 2 ("; allocate 32 bytes on stack for buffer (enough for 20 digits + newline)
+                sub rsp, 32
+                lea rsi, [rsp + 31]    ; point to end of buffer
+                mov byte [rsi], 10     ; newline
+                dec rsi
+
+                mov rax, rdi           ; value to convert
+                mov rcx, 10
+
+            .convert_loop:
+                xor rdx, rdx
+                div rcx                ; divide rax by 10 -> quotient in rax, remainder in rdx
+                add dl, '0'
+                mov [rsi], dl
+                dec rsi
+                test rax, rax
+                jnz .convert_loop
+
+                inc rsi                ; point to first digit
+
+                ; write syscall
+                mov rax, 1             ; syscall: write
+                mov rdi, 1             ; stdout
+                mov rdx, rsp
+                lea rdx, [rsp + 32]    ; end of stack buffer
+                sub rdx, rsi           ; length = end - start
+                mov rsi, rsi           ; buffer pointer is already in rsi
+                syscall
+
+                ; restore stack
+                add rsp, 32")
+    14: OP_CALL (22)   # line 34 2
+    16: OP_POP (4)   # line 34
+    17: OP_NULL (1)   # line 35
+    18: OP_END_FUNC (21)   # line 35
+    19: OP_BEG_FUNC (20)   # line 36 4 (main)
+    21: OP_CONSTANT (0)   # line 37 3 (40)
+    23: OP_SET_LOCAL (6)   # line 37 5 (a)
+    25: OP_POP (4)   # line 37
+    26: OP_CONSTANT (0)   # line 38 4 (11)
+    28: OP_DEFINE_LOCAL (5)   # line 38 6 (b)
+    30: OP_GET_LOCAL (7)   # line 39 7 (print_int)
+    32: OP_GET_LOCAL (7)   # line 39 8 (a)
+    34: OP_CALL (22)   # line 39 1
+    36: OP_POP (4)   # line 39
+    37: OP_GET_LOCAL (7)   # line 40 9 (print_int)
+    39: OP_GET_LOCAL (7)   # line 40 10 (b)
+    41: OP_CALL (22)   # line 40 1
+    43: OP_POP (4)   # line 40
+    44: OP_GET_LOCAL (7)   # line 41 11 (a)
+    46: OP_RETURN (26)   # line 41
+    47: OP_END_FUNC (21)   # line 42
 .constants
-    const 0: 5
+    const 0: 20
     const 1: 0
-    const 2: "
-        mov rbx, rdi
-        add rbx, rsi
-    "
-    const 3: 30
+    const 2: "; allocate 32 bytes on stack for buffer (enough for 20 digits + newline)
+                sub rsp, 32
+                lea rsi, [rsp + 31]    ; point to end of buffer
+                mov byte [rsi], 10     ; newline
+                dec rsi
+
+                mov rax, rdi           ; value to convert
+                mov rcx, 10
+
+            .convert_loop:
+                xor rdx, rdx
+                div rcx                ; divide rax by 10 -> quotient in rax, remainder in rdx
+                add dl, '0'
+                mov [rsi], dl
+                dec rsi
+                test rax, rax
+                jnz .convert_loop
+
+                inc rsi                ; point to first digit
+
+                ; write syscall
+                mov rax, 1             ; syscall: write
+                mov rdi, 1             ; stdout
+                mov rdx, rsp
+                lea rdx, [rsp + 32]    ; end of stack buffer
+                sub rdx, rsi           ; length = end - start
+                mov rsi, rsi           ; buffer pointer is already in rsi
+                syscall
+
+                ; restore stack
+                add rsp, 32"
+    const 3: 40
+    const 4: 11
 
 .names
-    name 0: addWithFive
-    name 1: sum
-    name 2: a
-    name 3: b
-    name 4: asm
-    name 5: __temp__
-    name 6: main
-    name 7: sum
-    name 8: addWithFive
+    name 0: a
+    name 1: print_int
+    name 2: val
+    name 3: asm
+    name 4: main
+    name 5: a
+    name 6: b
+    name 7: print_int
+    name 8: a
+    name 9: print_int
+    name 10: b
+    name 11: a
