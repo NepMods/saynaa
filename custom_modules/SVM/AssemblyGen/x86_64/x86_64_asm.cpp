@@ -7,7 +7,29 @@
 #include <fstream>
 #include <iostream>
 
+x86_64_register_manager main_reigster_manager = x86_64_register_manager();
 static const char* param_regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+std::string x86_64_register_manager::hold_tmp() {
+    held = (held + 1) % temp_registers.size();
+    return temp_registers[held];
+}
+
+std::string x86_64_register_manager::release_tmp(int i) {
+    held = (held - i) % temp_registers.size();
+    std::string reg = temp_registers[held];
+    printf("Released %d\n", held);
+    held--;
+    return reg;
+}
+
+std::string x86_64_register_manager::hold_and_release_tmp() {
+    std::string reg = hold_tmp();
+    return release_tmp(); // you may want to use `reg` here instead
+}
+std::string x86_64_register_manager::pull_tmp()
+{
+    return temp_registers[held];
+}
 
 void x86_64_symbol::add_text(std::string text, int indent)
 {
@@ -20,6 +42,7 @@ void x86_64_symbol::add_text_top(std::string text, int indent)
 
     add_asm_line(text, &this->text_top, indent);
 }
+
 void x86_64_symbol::initialize(std::string name)
 {
 
@@ -57,7 +80,7 @@ void x86_64_symbol::asm_call(std::string name, int param_size, std::vector<x86_6
         {
             found = true;
             add_text("call " + name, 1);
-            add_text("mov rbx, rax", 1);
+            add_text("mov "+main_reigster_manager.hold_tmp()+", rax", 1);
             if (param_size > 6)
             {
                 add_text("add rsp, "+ std::to_string((param_size - 6) * 8), 1);
@@ -78,15 +101,16 @@ void x86_64_symbol::asm_syscall(int syscall)
     add_text("mov rax, "+std::to_string(syscall), 1);
     add_text("syscall", 1);
 }
-void x86_64_symbol::return_raw(std::string data)
+void x86_64_symbol::return_l()
 {
-    add_text(data, 1);
+    auto reg = main_reigster_manager.release_tmp();
+    add_text("mov rax, " + reg, 1);
     returned = true;
 }
 
 void x86_64_symbol::add_temp_var(std::string value)
 {
-    add_text("mov rbx, "+value, 1);
+    add_text("mov "+main_reigster_manager.hold_tmp()+", "+value, 1);
 }
 
 void x86_64_symbol::push_variable(std::string name, bool isMain)
@@ -98,7 +122,7 @@ void x86_64_symbol::push_variable(std::string name, bool isMain)
 
     if ((!isMain && name == "main") || (name != "main"))
     {
-        add_text("mov qword [rbp+"+std::to_string(variable.base_pointer * 8)+"], rbx", 1);
+        add_text("mov qword [rbp+"+std::to_string(variable.base_pointer * 8)+"], "+main_reigster_manager.hold_and_release_tmp()+"", 1);
     }
     variables.push_back(variable);
 
@@ -127,8 +151,8 @@ void x86_64_symbol::push_call_parameter(std::string value, int size)
     }
     else
     {
-        add_text("mov rbx, " + value, 1);
-        add_text("push rbx", 1);
+        add_text("mov "+main_reigster_manager.hold_and_release_tmp()+", " + value, 1);
+        add_text("push "+main_reigster_manager.hold_and_release_tmp()+"", 1);
     }
 }
 void x86_64_symbol::set_variable(std::string name, std::string value, std::vector<x86_64_variable> &g_variables, bool isMain)
@@ -153,7 +177,7 @@ void x86_64_symbol::set_variable(std::string name, std::string value, std::vecto
             if (var.name == name)
             {
 
-                add_text("mov [rel "+var.name+"], rbx", 1);
+                add_text("mov [rel "+var.name+"], "+main_reigster_manager.hold_and_release_tmp()+"", 1);
                 return;
             }
         }
@@ -167,11 +191,11 @@ void x86_64_symbol::set_variable(std::string name, std::string value, std::vecto
                 printf("bp: %d", var.base_pointer);
                 if (var.base_pointer < 6)
                 {
-                    add_text("mov "+std::string(param_regs[var.base_pointer])+", rbx", 1);
+                    add_text("mov "+std::string(param_regs[var.base_pointer])+", "+main_reigster_manager.hold_and_release_tmp()+"", 1);
                 } else
                 {
                     int position = (parameter_size) - var.base_pointer;
-                    add_text("mov [rbp + "+std::to_string((position + 1) * 8)+"], rbx", 1);
+                    add_text("mov [rbp + "+std::to_string((position + 1) * 8)+"], "+main_reigster_manager.hold_and_release_tmp()+"", 1);
                 }
 
                 return;
@@ -183,7 +207,7 @@ void x86_64_symbol::set_variable(std::string name, std::string value, std::vecto
         runtimeError("Variable "+name+" cant be found at symbol "+this->name);
     }
 
-    add_text("mov  [rbp+"+std::to_string(variable.base_pointer * 8)+"], rbx", 1);
+    add_text("mov  [rbp+"+std::to_string(variable.base_pointer * 8)+"], "+main_reigster_manager.hold_and_release_tmp()+"", 1);
 
 }
 
@@ -205,11 +229,10 @@ void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> 
     {
         for (auto var : (!isMain && this->name == "main") ? variables : g_variables )
         {
-            printf("%s", var.name.c_str());
             if (var.name == name)
             {
 
-                add_text("mov rbx, [rel "+var.name+"]", 1);
+                add_text("mov "+main_reigster_manager.hold_tmp()+", [rel "+var.name+"]", 1);
                 return;
             }
         }
@@ -223,11 +246,11 @@ void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> 
                 printf("bp: %d", var.base_pointer);
                 if (var.base_pointer < 6)
                 {
-                    add_text("mov rbx, "+std::string(param_regs[var.base_pointer])+"", 1);
+                    add_text("mov "+main_reigster_manager.hold_tmp()+", "+std::string(param_regs[var.base_pointer])+"", 1);
                 } else
                 {
                     int position = (parameter_size) - var.base_pointer;
-                    add_text("mov rbx, [rbp + "+std::to_string((position + 1) * 8)+"]", 1);
+                    add_text("mov "+main_reigster_manager.hold_tmp()+", [rbp + "+std::to_string((position + 1) * 8)+"]", 1);
                 }
 
                 return;
@@ -239,9 +262,55 @@ void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> 
         runtimeError("Variable "+name+" cant be found at symbol "+this->name);
     }
 
-    add_text("mov rbx, [rbp+"+std::to_string(variable.base_pointer * 8)+"]", 1);
+    add_text("mov "+main_reigster_manager.hold_tmp()+", [rbp+"+std::to_string(variable.base_pointer * 8)+"]", 1);
 
 }
+
+void x86_64_symbol::binary_op(BINARY_OP op)
+{
+    auto reg1 = main_reigster_manager.pull_tmp();
+    auto reg2 = main_reigster_manager.release_tmp();
+
+    if (op == BINARY_OP_ADD)
+    {
+        add_text("add "+reg1+", "+reg2, 1);
+        add_text("mov "+main_reigster_manager.hold_tmp()+", "+reg1, 1);
+    }
+    if (op == BINARY_OP_SUBTRACT)
+    {
+        add_text("sub "+reg2+", "+reg1, 1);
+        add_text("mov "+main_reigster_manager.hold_tmp()+", "+reg2, 1);
+    }
+    if (op == BINARY_OP_MULTIPLY)
+    {
+        add_text("imul "+reg1+", "+reg2, 1);
+        add_text("mov "+main_reigster_manager.hold_tmp()+", "+reg1, 1);
+    }
+    if (op == BINARY_OP_DIVIDE)
+    {
+        add_text("mov rax, "+ reg2, 1);
+        add_text("mov rcx, "+reg1, 1);
+        add_text("xor rdx, rdx", 1);
+        add_text("div rcx ", 1);
+        add_text("mov "+main_reigster_manager.hold_tmp()+", rax", 1);
+    }
+    if (op == BINARY_OP_EQUAL)
+    {
+        add_text("cmp "+reg1+", "+reg2, 1);
+        add_text("sete al", 1);
+        add_text("movzx eax, al", 1);
+        add_text("mov "+main_reigster_manager.hold_tmp()+", rax", 1);
+    }
+
+    if (op == BINARY_OP_NEQUAL)
+    {
+        add_text("cmp "+reg1+", "+reg2, 1);
+        add_text("setne al", 1);
+        add_text("movzx eax, al", 1);
+        add_text("mov "+main_reigster_manager.hold_tmp()+", rax", 1);
+    }
+}
+
 
 
 std::string x86_64_symbol::get_text()
@@ -257,10 +326,9 @@ void x86_64_asm::initialize()
     global_symbol.initialize("_start");
     global_symbol.exported = true;
     global_symbol.asm_raw_line("call main");
-    global_symbol.asm_raw_line("mov rbx, rax");
-    global_symbol.asm_raw_line("mov rdi, rbx");
+    global_symbol.asm_raw_line("mov "+main_reigster_manager.hold_and_release_tmp()+", rax");
+    global_symbol.asm_raw_line("mov rdi, "+main_reigster_manager.hold_and_release_tmp()+"");
     global_symbol.asm_syscall(60); // We dont need to finalize because its directly exiting
-
     main_symbol.initialize("main");
     main_symbol.exported = false;
     current_context = &main_symbol;

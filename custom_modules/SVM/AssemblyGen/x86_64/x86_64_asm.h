@@ -9,10 +9,32 @@
 
 void add_asm_line(std::string line, std::string *to, int indent = 0);
 
+class x86_64_register_manager {
+    std::vector<std::string> temp_registers = {"rbx", "rcx", "rdx"};
+    int held = -1;
+
+public:
+    std::string hold_tmp();
+    x86_64_register_manager() : held(-1) {}
+    std::string release_tmp(int i = 1);
+    std::string hold_and_release_tmp();
+    std::string pull_tmp();
+};
+
 enum  x86_var_type
 {
     STRING,
     NUMBER
+};
+
+enum BINARY_OP
+{
+    BINARY_OP_ADD,
+    BINARY_OP_SUBTRACT,
+    BINARY_OP_MULTIPLY,
+    BINARY_OP_DIVIDE,
+    BINARY_OP_EQUAL,
+    BINARY_OP_NEQUAL
 };
 
 struct x86_64_variable
@@ -27,6 +49,7 @@ struct x86_64_symbol
 private:
     void add_text(std::string text, int indent = 0);
     void add_text_top(std::string text, int indent = 0);
+
 public:
     std::string name;
     std::string text_top;
@@ -49,13 +72,15 @@ public:
     void asm_call(std::string name, int param_size, std::vector<x86_64_symbol> list_symbols);
     void asm_raw_line(std::string data);
     void asm_syscall(int syscall);
-    void return_raw(std::string data);
+    void return_l();
     void add_temp_var(std::string value);
     void push_variable(std::string name, bool isMain);
     void get_variable(std::string name, std::vector<x86_64_variable> &g_variables, bool isMain);
     void add_parameter(std::string name, std::string def_value);
     void push_call_parameter(std::string value, int size);
     void set_variable(std::string name, std::string value, std::vector<x86_64_variable> &g_variables, bool isMain);
+    void binary_op(BINARY_OP op);
+
     std::string get_text();
 
 
