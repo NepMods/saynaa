@@ -67,7 +67,7 @@ void saveBytecodeToSmaliFile(const Bytecode &bytecode, const std::string &filena
         if (line > 0) out << "   # line " << line;
 
         // Example: opcodes with 1 operand:
-        if (op == OP_CONSTANT || op == OP_DEFINE_LOCAL || op == OP_GET_LOCAL || op == OP_SET_LOCAL || op == OP_CALL || op == OP_BEG_FUNC || op == OP_DEF_PARAM) {
+        if (op == OP_CONSTANT || op == OP_DEFINE_LOCAL || op == OP_GET_LOCAL || op == OP_SET_LOCAL || op == OP_CALL || op == OP_BEG_FUNC || op == OP_DEF_PARAM || op == OP_JUMP_IF_NOT) {
             if (i + 1 < bytecode.opcode.size()) {
                 uint32_t operand = bytecode.opcode[i + 1];
                 out << " " << operand;

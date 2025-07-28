@@ -19,7 +19,7 @@ class AssemblyGen {
     bool skip_to(uint32_t bytecode);
     void next();
     void parse_asm_fun();
-    void parse_call();
+    void condition_label(int indx, std::string label);
 
 public:
     AssemblyGen(Bytecode bytecode);

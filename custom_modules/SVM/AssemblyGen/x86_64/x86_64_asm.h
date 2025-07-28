@@ -64,6 +64,8 @@ public:
     std::vector<x86_64_variable> parameters;
     int required_parameters = 0;
     bool is_param_vargs = false;
+    std::string exit_label;
+    int label_counter = 0;
 
     void initialize(std::string name);
     void finalize();
@@ -80,7 +82,11 @@ public:
     void push_call_parameter(std::string value, int size);
     void set_variable(std::string name, std::string value, std::vector<x86_64_variable> &g_variables, bool isMain);
     void binary_op(BINARY_OP op);
-
+    void add_label(std::string name);
+    void skip_to_next_label_if_false(std::string to);
+    std::string next_label();
+    void jump_to(std::string label);
+    void jmp_if_zero(std::string label);
     std::string get_text();
 
 

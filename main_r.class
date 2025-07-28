@@ -22,19 +22,22 @@
     32: OP_CONSTANT (0)   # line 9 3 (21)
     34: OP_SET_LOCAL (6)   # line 9 9 (a)
     36: OP_POP (4)   # line 9
-    37: OP_JUMP (23)   # line 10
-    38: UNKNOWN_44 (44)   # line 10
-    39: OP_CONSTANT (0)   # line 11 4 (5)
-    41: OP_RETURN (26)   # line 11
-    42: OP_GET_LOCAL (7)   # line 14 10 (a)
-    44: OP_RETURN (26)   # line 14
-    45: OP_END_FUNC (21)   # line 15
+    37: OP_JUMP (23)   # line 10 44
+    39: OP_JUMP_HERE (25)   # line 22 5
+    41: OP_CONSTANT (0)   # line 11 4 (5)
+    43: OP_RETURN (26)   # line 11
+    44: OP_JUMP_HERE (25)   # line 22 6
+    46: OP_GET_LOCAL (7)   # line 14 10 (a)
+    48: OP_RETURN (26)   # line 14
+    49: OP_END_FUNC (21)   # line 15
 .constants
     const 0: 6
     const 1: 6
     const 2: 12
     const 3: 21
     const 4: 5
+    const 5: "mainL0"
+    const 6: "mainL1"
 
 .names
     name 0: sum

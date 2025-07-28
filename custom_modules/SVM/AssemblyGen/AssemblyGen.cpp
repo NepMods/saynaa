@@ -26,7 +26,7 @@ uint32_t AssemblyGen::get_bytecode()
 
 uint32_t AssemblyGen::peek_bytecode(int offset)
 {
-    if (showLogs) printf(">> AssemblyGen::peek_bytecode(%d)\n", offset);
+    // if (showLogs) printf(">> AssemblyGen::peek_bytecode(%d)\n", offset);
     if (index + offset < bytecode.opcode.size()) {
         return bytecode.opcode[index + offset];
     }
@@ -62,7 +62,7 @@ void AssemblyGen::next()
     // if (showLogs) printf(">> AssemblyGen::next()\n");
 
     int current_bytecode = get_bytecode();
-
+    printf("%d\n", current_bytecode);
     switch (current_bytecode)
     {
     case OP_BEG_FUNC:
@@ -78,6 +78,9 @@ void AssemblyGen::next()
             next_bytecode(); // skip name
         }
         break;
+    case OP_NONE:
+        next_bytecode();
+        break;;
     case OP_TRUE:
     case OP_FALSE:
     case OP_NULL:
@@ -156,14 +159,13 @@ void AssemblyGen::next()
             {
                 parse_asm_fun();
                 return;
-            }
-            auto it = std::find(function_names.begin(), function_names.end(), name);
+            }auto it = std::find(function_names.begin(), function_names.end(), name);
             if (it != function_names.end())
             {
                 int param_size = 0;
                 while (next_bytecode() != OP_CALL)
                 {
-                    printf("A Function %d", peek_bytecode(1) == OP_CALL);
+                    // printf("A Function %d", peek_bytecode(1) == OP_CALL);
 
                     if (get_bytecode() == OP_CONSTANT)
                     {
@@ -246,7 +248,7 @@ void AssemblyGen::next()
 
     case OP_EQUAL:
         {
-            if (showLogs) printf(">> Handling OP_EQUAL\n");
+            // if (showLogs) printf(">> Handling OP_EQUAL\n");
             x86_64.current_context->binary_op(BINARY_OP_EQUAL);
             next_bytecode();
         }
@@ -259,13 +261,32 @@ void AssemblyGen::next()
 
         }break;;
     case OP_JUMP_IF_NOT:
-        next_bytecode();
+        {
+            int goto_path = next_bytecode();
+            auto next_label_name = x86_64.current_context->next_label();
+            condition_label(goto_path, next_label_name);
+            x86_64.current_context->skip_to_next_label_if_false(next_label_name);
+            next_bytecode();
+         }
         break;
 
     case OP_JUMP:
-        next_bytecode();
+        {
+
+            int goto_path = next_bytecode();
+            auto next_label_name = x86_64.current_context->next_label();
+            condition_label(goto_path, next_label_name);
+            x86_64.current_context->jump_to(next_label_name);
+            next_bytecode();
+        }break;
+    case OP_JUMP_HERE: {
+            std::string goto_path = std::get<std::string>(bytecode.value[next_bytecode()]);
+            x86_64.current_context->add_label(goto_path);
+            next_bytecode();
+    }
     break;
     }
+
 }
 
 bool AssemblyGen::skip_to(uint32_t bytecode)
@@ -277,6 +298,98 @@ bool AssemblyGen::skip_to(uint32_t bytecode)
     }
     return true;
 }
+
+
+
+void saveBytecodeToSmaliFile2(const Bytecode &bytecode, const std::string &filename) {
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        std::cerr << "Failed to open file for writing: " << filename << "\n";
+        return;
+    }
+
+    out << "# Bytecode dump (.smali-like)\n\n";
+
+    // Opcodes section
+
+    out << ".code\n";
+    for (size_t i = 0; i < bytecode.opcode.size();) {
+        uint32_t op = bytecode.opcode[i];
+        uint32_t line = (i < bytecode.lines.size()) ? bytecode.lines[i] : 0;
+        std::string name = opcodeToName(op);
+
+        out << "    " << i << ": " << name << " (" << op << ")";
+        if (line > 0) out << "   # line " << line;
+
+        // Example: opcodes with 1 operand:
+        if (op == OP_CONSTANT || op == OP_DEFINE_LOCAL || op == OP_GET_LOCAL || op == OP_SET_LOCAL || op == OP_CALL || op == OP_BEG_FUNC || op == OP_DEF_PARAM || op == OP_JUMP_IF_NOT || op == OP_JUMP_HERE || op == OP_JUMP) {
+            if (i + 1 < bytecode.opcode.size()) {
+                uint32_t operand = bytecode.opcode[i + 1];
+                out << " " << operand;
+
+                // Annotate constants or names
+                if (op == OP_CONSTANT && operand < bytecode.value.size()) {
+                    const auto &v = bytecode.value[operand];
+                    out << " (";
+                    if (std::holds_alternative<int>(v)) {
+                        out << std::get<int>(v);
+                    } else if (std::holds_alternative<std::string>(v)) {
+                        out << "\"" << std::get<std::string>(v) << "\"";
+                    }
+                    out << ")";
+                } else if ((op == OP_DEFINE_LOCAL || op == OP_GET_LOCAL || op == OP_SET_LOCAL || op == OP_BEG_FUNC) && operand < bytecode.name.size()) {
+                    out << " (" << bytecode.name[operand] << ")";
+                }
+                i += 2;
+            } else {
+                i++;
+            }
+        } else {
+            i++;
+        }
+        out << "\n";
+    }
+
+    // Constants section
+    out << ".constants\n";
+    for (size_t i = 0; i < bytecode.value.size(); ++i) {
+        out << "    const " << i << ": ";
+        const auto &v = bytecode.value[i];
+        if (std::holds_alternative<int>(v)) {
+            out << std::get<int>(v);
+        } else if (std::holds_alternative<std::string>(v)) {
+            out << "\"" << std::get<std::string>(v) << "\"";
+        }
+        out << "\n";
+    }
+    out << "\n";
+
+    // Names section
+    out << ".names\n";
+    for (size_t i = 0; i < bytecode.name.size(); ++i) {
+        out << "    name " << i << ": " << bytecode.name[i] << "\n";
+    }
+
+    out.close();
+
+    std::cout << "Bytecode saved to " << filename << std::endl;
+}
+
+
+void AssemblyGen::condition_label(int indx, std::string label)
+{
+
+    bytecode.value.push_back(label);
+    uint32_t constant = bytecode.value.size() - 1;
+
+    bytecode.opcode.insert(bytecode.opcode.begin() + indx, OP_JUMP_HERE);
+    bytecode.lines.insert(bytecode.lines.begin() + indx, 22);
+
+    bytecode.opcode.insert(bytecode.opcode.begin() + indx + 1, constant);
+    bytecode.lines.insert(bytecode.lines.begin() + indx + 1, 23);
+    saveBytecodeToSmaliFile2(bytecode, "main_r.class");
+}
+
 
 void AssemblyGen::parse_asm_fun()
 {

@@ -17,7 +17,7 @@ std::string x86_64_register_manager::hold_tmp() {
 std::string x86_64_register_manager::release_tmp(int i) {
     held = (held - i) % temp_registers.size();
     std::string reg = temp_registers[held];
-    printf("Released %d\n", held);
+    // printf("Released %d\n", held);
     held--;
     return reg;
 }
@@ -47,6 +47,7 @@ void x86_64_symbol::initialize(std::string name)
 {
 
     this->name = name;
+    exit_label = name + "_exit";
     add_text_top(name +":");
     add_text_top("push rbp", 1);
     add_text_top("mov rbp, rsp", 1);
@@ -62,6 +63,8 @@ void x86_64_symbol::finalize()
     {
         add_text("mov rax, 0", 1);
     }
+    add_text("."+exit_label+":", 1);
+
     if (this->current_base_pointer < 0)
     {
         add_text_top("sub rsp, "+std::to_string((0-this->current_base_pointer)*8), 1);
@@ -105,6 +108,7 @@ void x86_64_symbol::return_l()
 {
     auto reg = main_reigster_manager.release_tmp();
     add_text("mov rax, " + reg, 1);
+    add_text("jmp ."+exit_label, 1);
     returned = true;
 }
 
@@ -311,6 +315,31 @@ void x86_64_symbol::binary_op(BINARY_OP op)
     }
 }
 
+void x86_64_symbol::skip_to_next_label_if_false(std::string to)
+{
+    add_text("cmp "+main_reigster_manager.hold_and_release_tmp()+", 0", 1);
+    jmp_if_zero(to);
+}
+
+
+void x86_64_symbol::add_label(std::string name)
+{
+    add_text("."+name+":");
+}
+void x86_64_symbol::jump_to(std::string label)
+{
+    add_text("jmp ."+label, 1);
+}
+void x86_64_symbol::jmp_if_zero(std::string label)
+{
+    add_text("jz ."+label, 1);
+}
+
+
+std::string x86_64_symbol::next_label()
+{
+    return name+"L"+std::to_string(label_counter++);
+}
 
 
 std::string x86_64_symbol::get_text()

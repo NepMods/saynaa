@@ -1,0 +1,466 @@
+[
+  {
+    "at": [
+      1,
+      8
+    ],
+    "name": "TOKEN_ID",
+    "value": "function"
+  },
+  {
+    "at": [
+      1,
+      12
+    ],
+    "name": "TOKEN_ID",
+    "value": "sum"
+  },
+  {
+    "at": [
+      1,
+      12
+    ],
+    "name": "TOKEN_LPAREN",
+    "value": "("
+  },
+  {
+    "at": [
+      1,
+      14
+    ],
+    "name": "TOKEN_ID",
+    "value": "a"
+  },
+  {
+    "at": [
+      1,
+      14
+    ],
+    "name": "TOKEN_COMMA",
+    "value": ","
+  },
+  {
+    "at": [
+      1,
+      17
+    ],
+    "name": "TOKEN_ID",
+    "value": "b"
+  },
+  {
+    "at": [
+      1,
+      17
+    ],
+    "name": "TOKEN_RPAREN",
+    "value": ")"
+  },
+  {
+    "at": [
+      1,
+      18
+    ],
+    "name": "TOKEN_LBRACE",
+    "value": "{"
+  },
+  {
+    "at": [
+      2,
+      11
+    ],
+    "name": "TOKEN_ID",
+    "value": "return"
+  },
+  {
+    "at": [
+      2,
+      13
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "3"
+  },
+  {
+    "at": [
+      2,
+      14
+    ],
+    "name": "TOKEN_EQUALS",
+    "value": "="
+  },
+  {
+    "at": [
+      2,
+      15
+    ],
+    "name": "TOKEN_EQUALS",
+    "value": "="
+  },
+  {
+    "at": [
+      2,
+      17
+    ],
+    "name": "TOKEN_LPAREN",
+    "value": "("
+  },
+  {
+    "at": [
+      2,
+      18
+    ],
+    "name": "TOKEN_LPAREN",
+    "value": "("
+  },
+  {
+    "at": [
+      2,
+      20
+    ],
+    "name": "TOKEN_ID",
+    "value": "a"
+  },
+  {
+    "at": [
+      2,
+      20
+    ],
+    "name": "TOKEN_PLUS",
+    "value": "+"
+  },
+  {
+    "at": [
+      2,
+      22
+    ],
+    "name": "TOKEN_ID",
+    "value": "b"
+  },
+  {
+    "at": [
+      2,
+      22
+    ],
+    "name": "TOKEN_PLUS",
+    "value": "+"
+  },
+  {
+    "at": [
+      2,
+      24
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "4"
+  },
+  {
+    "at": [
+      2,
+      24
+    ],
+    "name": "TOKEN_PLUS",
+    "value": "+"
+  },
+  {
+    "at": [
+      2,
+      26
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "5"
+  },
+  {
+    "at": [
+      2,
+      26
+    ],
+    "name": "TOKEN_MINUS",
+    "value": "-"
+  },
+  {
+    "at": [
+      2,
+      28
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "6"
+  },
+  {
+    "at": [
+      2,
+      28
+    ],
+    "name": "TOKEN_RPAREN",
+    "value": ")"
+  },
+  {
+    "at": [
+      2,
+      29
+    ],
+    "name": "TOKEN_STAR",
+    "value": "*"
+  },
+  {
+    "at": [
+      2,
+      31
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "2"
+  },
+  {
+    "at": [
+      2,
+      31
+    ],
+    "name": "TOKEN_RPAREN",
+    "value": ")"
+  },
+  {
+    "at": [
+      2,
+      32
+    ],
+    "name": "TOKEN_SLASH",
+    "value": "/"
+  },
+  {
+    "at": [
+      2,
+      34
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "8"
+  },
+  {
+    "at": [
+      2,
+      34
+    ],
+    "name": "TOKEN_SEMI",
+    "value": ";"
+  },
+  {
+    "at": [
+      3,
+      1
+    ],
+    "name": "TOKEN_RBRACE",
+    "value": "}"
+  },
+  {
+    "at": [
+      4,
+      9
+    ],
+    "name": "TOKEN_ID",
+    "value": "function"
+  },
+  {
+    "at": [
+      4,
+      14
+    ],
+    "name": "TOKEN_ID",
+    "value": "main"
+  },
+  {
+    "at": [
+      4,
+      14
+    ],
+    "name": "TOKEN_LPAREN",
+    "value": "("
+  },
+  {
+    "at": [
+      4,
+      15
+    ],
+    "name": "TOKEN_RPAREN",
+    "value": ")"
+  },
+  {
+    "at": [
+      4,
+      17
+    ],
+    "name": "TOKEN_LBRACE",
+    "value": "{"
+  },
+  {
+    "at": [
+      5,
+      8
+    ],
+    "name": "TOKEN_ID",
+    "value": "let"
+  },
+  {
+    "at": [
+      5,
+      10
+    ],
+    "name": "TOKEN_ID",
+    "value": "a"
+  },
+  {
+    "at": [
+      5,
+      11
+    ],
+    "name": "TOKEN_EQUALS",
+    "value": "="
+  },
+  {
+    "at": [
+      5,
+      15
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "12"
+  },
+  {
+    "at": [
+      5,
+      15
+    ],
+    "name": "TOKEN_SEMI",
+    "value": ";"
+  },
+  {
+    "at": [
+      6,
+      7
+    ],
+    "name": "TOKEN_ID",
+    "value": "if"
+  },
+  {
+    "at": [
+      6,
+      7
+    ],
+    "name": "TOKEN_LPAREN",
+    "value": "("
+  },
+  {
+    "at": [
+      6,
+      9
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "3"
+  },
+  {
+    "at": [
+      6,
+      10
+    ],
+    "name": "TOKEN_EQUALS",
+    "value": "="
+  },
+  {
+    "at": [
+      6,
+      11
+    ],
+    "name": "TOKEN_EQUALS",
+    "value": "="
+  },
+  {
+    "at": [
+      6,
+      18
+    ],
+    "name": "TOKEN_ID",
+    "value": "false"
+  },
+  {
+    "at": [
+      6,
+      18
+    ],
+    "name": "TOKEN_RPAREN",
+    "value": ")"
+  },
+  {
+    "at": [
+      6,
+      20
+    ],
+    "name": "TOKEN_LBRACE",
+    "value": "{"
+  },
+  {
+    "at": [
+      7,
+      15
+    ],
+    "name": "TOKEN_ID",
+    "value": "return"
+  },
+  {
+    "at": [
+      7,
+      18
+    ],
+    "name": "TOKEN_NUMBER",
+    "value": "33"
+  },
+  {
+    "at": [
+      7,
+      18
+    ],
+    "name": "TOKEN_SEMI",
+    "value": ";"
+  },
+  {
+    "at": [
+      8,
+      5
+    ],
+    "name": "TOKEN_RBRACE",
+    "value": "}"
+  },
+  {
+    "at": [
+      10,
+      11
+    ],
+    "name": "TOKEN_ID",
+    "value": "return"
+  },
+  {
+    "at": [
+      10,
+      13
+    ],
+    "name": "TOKEN_ID",
+    "value": "a"
+  },
+  {
+    "at": [
+      10,
+      13
+    ],
+    "name": "TOKEN_SEMI",
+    "value": ";"
+  },
+  {
+    "at": [
+      11,
+      1
+    ],
+    "name": "TOKEN_RBRACE",
+    "value": "}"
+  },
+  {
+    "at": [
+      11,
+      1
+    ],
+    "name": "TOKEN_EOF",
+    "value": ""
+  }
+]
