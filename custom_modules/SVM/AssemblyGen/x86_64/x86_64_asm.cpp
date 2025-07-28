@@ -63,8 +63,12 @@ void x86_64_symbol::finalize()
     {
         add_text("mov rax, 0", 1);
     }
-    add_text("."+exit_label+":", 1);
+    if (label_counter > 0 )
+    {
 
+        add_text("."+exit_label+":");
+
+    }
     if (this->current_base_pointer < 0)
     {
         add_text_top("sub rsp, "+std::to_string((0-this->current_base_pointer)*8), 1);
@@ -108,7 +112,11 @@ void x86_64_symbol::return_l()
 {
     auto reg = main_reigster_manager.release_tmp();
     add_text("mov rax, " + reg, 1);
-    add_text("jmp ."+exit_label, 1);
+    if (label_counter > 0)
+    {
+        add_text("jmp ."+exit_label, 1);
+
+    }
     returned = true;
 }
 
