@@ -20,10 +20,10 @@ class AssemblyGen {
     void next();
     void parse_asm_fun();
     void condition_label(int indx, std::string label);
-
+    bool linked = false;
 public:
     AssemblyGen(Bytecode bytecode);
-    std::string generateAssembly();
+    std::string generateAssembly(std::string name, bool linked);
 };
 
 

@@ -86,6 +86,12 @@ int Debug::disassembleInstruction(int offset) {
       return simpleInstruction("OP_NONE", offset);
   case OP_DEF_PARAM:
     return constantInstructionName("OP_DEF_PARAM", offset);
+  case OP_BEG_EXPORTED_FUNCTION:
+    return constantInstructionName("OP_BEG_EXPORTED_FUNCTION", offset);
+  case OP_IMPORT:
+    return constantInstructionName("OP_IMPORT", offset);
+  case OP_IMPORT_FROM:
+    return constantInstructionName("OP_IMPORT_FROM", offset);
 
     default:
       if (debug_enabled)

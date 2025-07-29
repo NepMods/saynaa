@@ -54,6 +54,10 @@ enum TokenType
     TK_LET,      // let
     TK_WHILE,    // while
 
+    TK_EXPORTED,
+    TK_IMPORT,
+    TK_IMPORT_FROM,
+
     TK_ERROR, //
     TK_EOF    // \0
 };
@@ -80,7 +84,8 @@ static _Keyword _keywords[] = {
     {"if", 2, TK_IF},          {"null", 4, TK_NULL},
     {"or", 2, TK_OR},          {"return", 6, TK_RETURN},
     {"true", 4, TK_TRUE},      {"let", 3, TK_LET},
-    {"while", 5, TK_WHILE},
+    {"while", 5, TK_WHILE},    {"import", 6, TK_IMPORT},
+    {"from", 4, TK_IMPORT_FROM},   {"export", 6, TK_EXPORTED},
 
     {NULL, 0, (TokenType)(0)}, // Sentinel to mark the end of the array.
 };

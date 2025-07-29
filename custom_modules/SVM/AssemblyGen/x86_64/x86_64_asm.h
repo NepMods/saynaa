@@ -9,6 +9,8 @@
 
 void add_asm_line(std::string line, std::string *to, int indent = 0);
 
+bool has_export(const std::string& file_name, const std::string& func_name);
+
 class x86_64_register_manager {
     std::vector<std::string> temp_registers = {"rbx", "rcx", "rdx"};
     int held = -1;
@@ -71,7 +73,7 @@ public:
     void finalize();
     void runtimeError(std::string text);
 
-    void asm_call(std::string name, int param_size, std::vector<x86_64_symbol> list_symbols);
+    void asm_call(std::string name, int param_size, std::vector<x86_64_symbol> list_symbols, bool imported = false);
     void asm_raw_line(std::string data);
     void asm_syscall(int syscall);
     void return_l();
@@ -105,14 +107,19 @@ public:
     x86_64_symbol *current_context;
     std::vector<x86_64_symbol> symbols;
     std::vector<x86_64_variable> global_variables;
+    std::string file_name;
+    std::vector<std::string> imports;
 
     bool isMain = false;
+    bool linked = false;
 
-    void initialize();
+    void initialize(bool linked);
     void finalize();
-    void create_and_select_context(std::string name);
+    void create_and_select_context(std::string name, bool exported = false);
     void add_global_variable(std::string name, std::string value);
     void print(bool save, std::string filename);
+    void import_from(std::string filename, std::string name);
+    x86_64_symbol *get_current_context();
 
 };
 

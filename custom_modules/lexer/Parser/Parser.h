@@ -41,7 +41,7 @@ class Parser {
     void emitConstant(std::variant<int, std::string> value);
     void endCompiler();
     uint32_t identifierConstant(Token *name);
-    uint32_t parseVariable(const char *errorMessage);
+    uint32_t parseVariable(const char *errorMessage, TokenType token = TK_NAME);
     void defineVariable(uint32_t global);
     void binary();
     void call();
@@ -58,12 +58,13 @@ class Parser {
     void varDeclaration();
     void blockBody();
     void parseReturn();
-    void functionDeclaration();
+    void functionDeclaration(bool exported);
     void function();
     void expressionStatement();
     void ifStatement();
     void declaration();
     void statement();
+    void parse_import();
     int isMainThere = 0;
 
 public:

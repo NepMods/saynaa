@@ -6,101 +6,63 @@ Welcome to **Saynaa** – a programming language written in C++ from scratch.
 
 ---
 
-## Code Example
+## Run Example
 
-```js
-let addWithFive = 5;
 
-function sum(a, b) {
-  asm(0, `
-        mov rbx, rdi
-        add rbx, rsi
-    `);
-  return __temp__;
+To run the example code provided, use following command
+
+``make``
+
+``./compiler -l stdlib/print_int.sa examples/main.sa -o examples/app``
+
+this should output output as expected
+
+# Note: 
+```
+Now it supports import and export functions
+you can exporta funcion like:
+
+// sum.sa
+export function sum(a, b) {
+...
 }
+
+and import like
+
+//main.sa
+import sum from "sum"
 
 function main() {
-  return sum(addWithFive, 30);
-}
-```
-
-## Functions
-
-```js
-function print_int(val) {
-  asm(0, `; allocate 32 bytes on stack for buffer (enough for 20 digits + newline)
-                sub rsp, 32
-                lea rsi, [rsp + 31]    ; point to end of buffer
-                mov byte [rsi], 10     ; newline
-                dec rsi
-
-                mov rax, rdi           ; value to convert
-                mov rcx, 10
-
-            .convert_loop:
-                xor rdx, rdx
-                div rcx                ; divide rax by 10 -> quotient in rax, remainder in rdx
-                add dl, '0'
-                mov [rsi], dl
-                dec rsi
-                test rax, rax
-                jnz .convert_loop
-
-                inc rsi                ; point to first digit
-
-                ; write syscall
-                mov rax, 1             ; syscall: write
-                mov rdi, 1             ; stdout
-                mov rdx, rsp
-                lea rdx, [rsp + 32]    ; end of stack buffer
-                sub rdx, rsi           ; length = end - start
-                mov rsi, rsi           ; buffer pointer is already in rsi
-                syscall
-
-                ; restore stack
-                add rsp, 32`);
+  return sum(2,3);
 }
 
-function main() {
-  return print_int(3000);
-}
-```
 
-## Main Function
+and you build it like:
 
-```js
-function main() {
-  print("Inside Main function");
-  return 0;
-}
+./compiler -l sum.sa main.sa -o app
 
-// Output: Inside Main function
+you can add many -l flags
+for example
+
+./compiler -l sum.sa -l stdlib/print_int.sa main.sa -o app
+
+WARNING: while iporting, the name of file
+for example its "sum" here because we have -l sum.sa
+
+import sum from "sum"
+
+if we had -l example/main.sa
+we would do
+
+import sum from "example/main"
+
+
+the import filename is always as defined to the compiler command, not relative file path
+we can fix it later
+
 ```
 
 
-## Inline Assembly
-
-```asm(1, "ASSEMBLY_CODE"); //for ignoring everyting after asm func```
-
-```asm(0, "ASSEMBLY_CODE"); //for keeping everyting after asm func```
-```js
-function value() {
-  let retVal = "HI\n";
-  __system_tmpvalue_add(1); // We are accessing a var in asm, that needs one extra temp stack to be increased
-  asm(1, "    mov rax, qword[allVariable]
-  mov rbx, qword[rax+0]
-  mov rax, rbx
-  mov rbx, qword[tmpValue]
-  mov qword[rbx+0], rax
-  mov rax, rbx");
-
-}
-
-print(value());
-// Output: HI
-```
-
-RETURNS A VALUE FROM ASM
 
 ---
 

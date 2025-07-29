@@ -3,9 +3,22 @@
 //
 
 #include "x86_64_asm.h"
-
+#include "algorithm"
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+static std::unordered_map<std::string, std::unordered_set<std::string>> exports;
+
+void add_export(const std::string& file_name, const std::string& func_name) {
+    exports[file_name].insert(func_name);
+}
+
+bool has_export(const std::string& file_name, const std::string& func_name) {
+    auto it = exports.find(file_name);
+    if (it == exports.end()) return false;
+    return it->second.count(func_name) > 0;
+}
 
 x86_64_register_manager main_reigster_manager = x86_64_register_manager();
 static const char* param_regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
@@ -78,8 +91,18 @@ void x86_64_symbol::finalize()
     add_text("ret", 1);
     finalized = true;
 }
-void x86_64_symbol::asm_call(std::string name, int param_size, std::vector<x86_64_symbol> list_symbols)
+void x86_64_symbol::asm_call(std::string name, int param_size, std::vector<x86_64_symbol> list_symbols, bool imported)
 {
+    if (imported )
+    {
+        add_text("call " + name, 1);
+        add_text("mov "+main_reigster_manager.hold_tmp()+", rax", 1);
+        if (param_size > 6)
+        {
+            add_text("add rsp, "+ std::to_string((param_size - 6) * 8), 1);
+        }
+        return;
+    }
     bool found = false;
     for (auto symbol : list_symbols)
     {
@@ -200,7 +223,6 @@ void x86_64_symbol::set_variable(std::string name, std::string value, std::vecto
         {
             if (var.name == name)
             {
-                printf("bp: %d", var.base_pointer);
                 if (var.base_pointer < 6)
                 {
                     add_text("mov "+std::string(param_regs[var.base_pointer])+", "+main_reigster_manager.hold_and_release_tmp()+"", 1);
@@ -255,7 +277,6 @@ void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> 
         {
             if (var.name == name)
             {
-                printf("bp: %d", var.base_pointer);
                 if (var.base_pointer < 6)
                 {
                     add_text("mov "+main_reigster_manager.hold_tmp()+", "+std::string(param_regs[var.base_pointer])+"", 1);
@@ -269,6 +290,7 @@ void x86_64_symbol::get_variable(std::string name, std::vector<x86_64_variable> 
             }
         }
     }
+
     if (!found)
     {
         runtimeError("Variable "+name+" cant be found at symbol "+this->name);
@@ -356,24 +378,48 @@ std::string x86_64_symbol::get_text()
 }
 
 
-void x86_64_asm::initialize()
+void x86_64_asm::initialize(bool linked)
 {
+    this->linked = linked;
+
     add_text("section .text");
     add_data("section .data");
-    global_symbol.initialize("_start");
-    global_symbol.exported = true;
-    global_symbol.asm_raw_line("call main");
-    global_symbol.asm_raw_line("mov "+main_reigster_manager.hold_and_release_tmp()+", rax");
-    global_symbol.asm_raw_line("mov rdi, "+main_reigster_manager.hold_and_release_tmp()+"");
-    global_symbol.asm_syscall(60); // We dont need to finalize because its directly exiting
-    main_symbol.initialize("main");
-    main_symbol.exported = false;
-    current_context = &main_symbol;
+    if (!linked)
+    {
+        global_symbol.initialize("_start");
+        global_symbol.exported = true;
+        global_symbol.asm_raw_line("call main");
+        global_symbol.asm_raw_line("mov "+main_reigster_manager.hold_and_release_tmp()+", rax");
+        global_symbol.asm_raw_line("mov rdi, "+main_reigster_manager.hold_and_release_tmp()+"");
+        global_symbol.asm_syscall(60); // We dont need to finalize because its directly exiting
+        main_symbol.initialize("main");
+        main_symbol.exported = false;
+        current_context = &main_symbol;
+    }
 
 }
 
-void x86_64_asm::create_and_select_context(std::string name)
+x86_64_symbol* x86_64_asm::get_current_context()
 {
+    if (!current_context)
+    {
+        throw std::runtime_error("Context not initialized, please write code inside a function");
+    }
+    return current_context;
+}
+
+
+void x86_64_asm::create_and_select_context(std::string name, bool exported)
+{
+    if (exported)
+    {
+
+        if (has_export('"'+file_name+'"', name))
+        {
+            throw std::runtime_error('"'+file_name+'"'+" already exports function "+name);
+        }
+        add_export('"'+file_name+'"', name);
+    }
 
     if (name == "main")
     {
@@ -386,6 +432,7 @@ void x86_64_asm::create_and_select_context(std::string name)
     }
     x86_64_symbol current_contex;
     current_contex.initialize(name);
+    current_contex.exported = exported;
     symbols.push_back(current_contex);
     this->current_context = &symbols.back();
 }
@@ -398,6 +445,17 @@ void x86_64_asm::finalize()
         symbols.push_back(main_symbol);
     }
 
+}
+
+void x86_64_asm::import_from(std::string filename, std::string name)
+{
+    if (has_export(filename, name))
+    {
+        imports.push_back(name);
+    } else
+    {
+        throw std::runtime_error(filename+" doesnt export any function named "+name);
+    }
 }
 
 
@@ -436,10 +494,15 @@ void x86_64_asm::print(bool save, std::string filename)
     {
         if (symbol.exported)
         {
-            symbolList += "global" + symbol.name + "\n";
+            symbolList += "global " + symbol.name + "\n";
         }
         symbolData += symbol.get_text() + "\n";
     }
+
+    for (auto symbol : imports)
+    {
+            symbolList += "extern " + symbol + "\n";
+     }
     assembly += data_section;
     assembly += "\n";
     assembly += text_section;
@@ -447,7 +510,7 @@ void x86_64_asm::print(bool save, std::string filename)
     assembly += "\n";
     assembly += symbolData;
     assembly += global_symbol.get_text();
-    printf("%s\n", assembly.c_str());
+    // printf("%s\n", assembly.c_str());
 
     if (save)
     {

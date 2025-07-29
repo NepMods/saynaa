@@ -104,7 +104,6 @@ bool Parser::match(TokenType type) {
  void Parser::endCompiler() {
    if (bytecode->opcode[bytecode->opcode.size() - 1] != OP_RETURN) {
      if (!isMainThere) {
-
        emitReturn();
      }
    }
@@ -124,8 +123,8 @@ bool Parser::match(TokenType type) {
    return constant;
  }
 
- uint32_t Parser::parseVariable(const char *errorMessage) {
-   consume(TK_NAME, errorMessage);
+ uint32_t Parser::parseVariable(const char *errorMessage, TokenType token) {
+   consume(token, errorMessage);
    return identifierConstant(&previous);
  }
 
@@ -301,6 +300,11 @@ bool Parser::match(TokenType type) {
        [TK_TRUE] = {&Parser::literal, nullptr, PREC_NONE},
        [TK_LET] = {nullptr, nullptr, PREC_NONE},
        [TK_WHILE] = {nullptr, nullptr, PREC_NONE},
+
+     [TK_EXPORTED] = {nullptr, nullptr, PREC_NONE},
+
+     [TK_IMPORT] = {nullptr, nullptr, PREC_NONE},
+     [TK_IMPORT_FROM] = {nullptr, nullptr, PREC_NONE},
        [TK_ERROR] = {nullptr, nullptr, PREC_NONE},
        [TK_EOF] = {nullptr, nullptr, PREC_NONE},
    };
@@ -340,12 +344,12 @@ bool Parser::match(TokenType type) {
    }
  }
 
- void Parser::functionDeclaration() {
+ void Parser::functionDeclaration(bool exported) {
    uint32_t global = parseVariable("Expect function name.");
    if (bytecode->name.back() == "main") {
      isMainThere = 1;
    }
-   emitBytes(OP_BEG_FUNC, global);
+   emitBytes(exported ? OP_BEG_EXPORTED_FUNCTION :OP_BEG_FUNC, global);
    function();
    emitByte(OP_END_FUNC);
  }
@@ -400,17 +404,26 @@ void Parser::function() {
  }
 
  void Parser::declaration() {
-   if (match(TK_LET)) {
+
+  printf("%d", current.type);
+  if (match(TK_IMPORT))
+  {
+    parse_import();
+  } else if (match(TK_LET)) {
      varDeclaration();
    } else if (match(TK_FUNCTION)) {
-     functionDeclaration();
+     functionDeclaration(false);
+   } else if (match(TK_EXPORTED)) {
+     consume(TK_FUNCTION, "Invalid syntax");
+     functionDeclaration(true);
    } else {
      statement();
    }
  }
 
  void Parser::statement() {
-   if (match(TK_RETURN)) {
+
+ if (match(TK_RETURN)) {
      parseReturn();
    } else if (match(TK_IF)) {
      ifStatement();
@@ -420,6 +433,17 @@ void Parser::function() {
      expressionStatement();
    }
  }
+
+void Parser::parse_import()
+{
+     uint32_t name = parseVariable("Expect function name.");
+  consume(TK_IMPORT_FROM, "Expect from after import name.");
+  uint32_t file = parseVariable("Expect file name.", TK_STRING);
+  emitBytes(OP_IMPORT, name);
+  emitBytes(OP_IMPORT_FROM, file);
+  advance();
+}
+
 
  bool Parser::compile(Bytecode *bcode) {
    bytecode = bcode;
