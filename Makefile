@@ -7,9 +7,9 @@ CXXFLAGS := -std=c++20 -Wall -Wextra -g
 CFLAGS   := -Wall -Wextra -g
 
 # Main sources for the core compiler
-MAIN_SRC := main.cpp
-SRC_CPP := utils/utils.cpp utils/debug.cpp
-SRC_C   := modules/register.c
+MAIN_SRC := Main/main.cpp
+SRC_CPP := utils/utils.cpp utils/debug.cpp modules/Module.cpp
+SRC_C   :=
 
 # Discover one-level deep module directories within custom_modules
 MODULE_DIRS := $(shell find custom_modules -mindepth 1 -maxdepth 1 -type d)

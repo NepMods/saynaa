@@ -6,67 +6,63 @@ Welcome to **Saynaa** – a programming language written in C++ from scratch.
 
 ---
 
-## Code Example
+## Run Example
 
-```js
-let str = "result: ";
-let x = 10;
-let y = 20;
-let z = x*y;
 
-print(str);
-print(z);
+To run the example code provided, use following command
+
+``make``
+
+``./compiler -l stdlib/print_int.sa examples/main.sa -o examples/app``
+
+this should output output as expected
+
+# Note: 
 ```
+Now it supports import and export functions
+you can exporta funcion like:
 
-## Functions
-
-```js
-let OK = 0;
-let ERROR = 1;
-
-function TestFunction() {
-    return 8;
+// sum.sa
+export function sum(a, b) {
+...
 }
 
-print(TestFunction());
-return OK;
-```
+and import like
 
-## Main Function
+//main.sa
+import sum from "sum"
 
-```js
 function main() {
-    print("Inside Main function");
-    return 0; 
+  return sum(2,3);
 }
 
-// Output: Inside Main function
+
+and you build it like:
+
+./compiler -l sum.sa main.sa -o app
+
+you can add many -l flags
+for example
+
+./compiler -l sum.sa -l stdlib/print_int.sa main.sa -o app
+
+WARNING: while iporting, the name of file
+for example its "sum" here because we have -l sum.sa
+
+import sum from "sum"
+
+if we had -l example/main.sa
+we would do
+
+import sum from "example/main"
+
+
+the import filename is always as defined to the compiler command, not relative file path
+we can fix it later
+
 ```
 
 
-## Inline Assembly
-
-```asm(1, "ASSEMBLY_CODE"); //for ignoring everyting after asm func```
-
-```asm(0, "ASSEMBLY_CODE"); //for keeping everyting after asm func```
-```js
-function value() {
-  let retVal = "HI\n";
-  __system_tmpvalue_add(1); // We are accessing a var in asm, that needs one extra temp stack to be increased
-  asm(1, "    mov rax, qword[allVariable]
-    mov rbx, qword[rax+0]
-    mov rax, rbx
-    mov rbx, qword[tmpValue]
-    mov qword[rbx+0], rax
-    mov rax, rbx");
-
-}
-
-print(value());
-// Output: HI
-```
-
-RETURNS A VALUE FROM ASM
 
 ---
 

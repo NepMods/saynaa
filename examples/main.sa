@@ -1,0 +1,6 @@
+import print_int from "stdlib/print_int";
+
+function main() {
+    print_int(200);
+    return 0;
+}
