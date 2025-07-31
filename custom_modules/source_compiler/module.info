@@ -1,0 +1,3 @@
+name     = source_compiler
+priority = 0
+depends  =

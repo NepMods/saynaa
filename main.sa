@@ -1,6 +1,0 @@
-function value() {
-
-  return "Hello World!";
-}
-
-print(value());

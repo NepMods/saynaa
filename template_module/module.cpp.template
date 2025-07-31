@@ -1,0 +1,13 @@
+#include "../../modules/Module.h"
+#include <cstdio>
+
+static int __MODULE_NAME___run(ModuleContext *ctx) {
+    return 0;
+}
+
+static Module __MODULE_NAME___mod = Module(MODULE_NAME, MODULE_PRIORITY, __MODULE_NAME___run);
+__attribute__((constructor))
+void init___MODULE_NAME___module() {
+    register_module(&__MODULE_NAME___mod);
+}
+
